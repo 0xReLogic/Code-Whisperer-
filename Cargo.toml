@@ -1,0 +1,16 @@
+[workspace]
+members = [
+    "code-whisperer-core",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Code Whisperer Team"]
+description = "Intelligent IDE extension that learns coding patterns"
+license = "MIT"
+repository = "https://github.com/0xReLogic/Code-Whisperer-"
+
+[workspace.dependencies]
+serde = { version = "1.0", features = ["derive"] }
+wasm-bindgen = "0.2"
