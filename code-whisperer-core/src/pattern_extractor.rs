@@ -258,7 +258,7 @@ impl PatternExtractor {
         let mut constant_names = Vec::new();
 
         // Extract names based on language and AST structure
-        match ast {
+        match _ast {
             ParsedAst::JavaScript(module) => {
                 self.extract_js_names(module, &mut function_names, &mut variable_names, &mut class_names, &mut constant_names);
             },

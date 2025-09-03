@@ -37,6 +37,9 @@ mod variable_naming_recognizer;
 mod code_structure_analyzer;
 mod user_behavior_tracker;
 mod local_storage_manager;
+mod pattern_scoring_engine;
+mod suggestion_generation_engine;
+mod context_aware_filter;
 
 // Re-export for easier access
 pub use ast_parser::AstParser;
@@ -47,6 +50,9 @@ pub use variable_naming_recognizer::{VariableNamingRecognizer, VariableNamingAna
 pub use code_structure_analyzer::{CodeStructureAnalyzer, CodeStructureAnalysis};
 pub use user_behavior_tracker::{UserBehaviorTracker, BehaviorAnalysis};
 pub use local_storage_manager::{LocalStorageManager, UserPatternData, StorageResult};
+pub use pattern_scoring_engine::{PatternScoringEngine, ScoringResult, PatternScore};
+pub use suggestion_generation_engine::{SuggestionGenerationEngine, SuggestionResult, CodeSuggestion};
+pub use context_aware_filter::{ContextAwareFilter, CodingContext, ProjectInfo};
 
 // Core data structures for Code Whisperer
 
