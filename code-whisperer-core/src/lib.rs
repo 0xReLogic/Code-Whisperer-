@@ -30,9 +30,15 @@ extern "C" {
 
 // Module declarations
 mod ast_parser;
+mod pattern_extractor;
+mod style_analyzer;
+mod function_signature_detector;
 
 // Re-export for easier access
 pub use ast_parser::AstParser;
+pub use pattern_extractor::{PatternExtractor, PatternAnalysis, StyleMetrics, NamingConventions, StructurePatterns};
+pub use style_analyzer::{CodingStyleAnalyzer, DetailedStyleAnalysis};
+pub use function_signature_detector::{FunctionSignatureDetector, FunctionSignatureAnalysis, FunctionPattern};
 
 // Core data structures for Code Whisperer
 
@@ -114,7 +120,7 @@ pub struct PatternFeedback {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodingPattern {
     id: String,
     pattern_type: PatternType,
