@@ -33,12 +33,20 @@ mod ast_parser;
 mod pattern_extractor;
 mod style_analyzer;
 mod function_signature_detector;
+mod variable_naming_recognizer;
+mod code_structure_analyzer;
+mod user_behavior_tracker;
+mod local_storage_manager;
 
 // Re-export for easier access
 pub use ast_parser::AstParser;
 pub use pattern_extractor::{PatternExtractor, PatternAnalysis, StyleMetrics, NamingConventions, StructurePatterns};
 pub use style_analyzer::{CodingStyleAnalyzer, DetailedStyleAnalysis};
 pub use function_signature_detector::{FunctionSignatureDetector, FunctionSignatureAnalysis, FunctionPattern};
+pub use variable_naming_recognizer::{VariableNamingRecognizer, VariableNamingAnalysis};
+pub use code_structure_analyzer::{CodeStructureAnalyzer, CodeStructureAnalysis};
+pub use user_behavior_tracker::{UserBehaviorTracker, BehaviorAnalysis};
+pub use local_storage_manager::{LocalStorageManager, UserPatternData, StorageResult};
 
 // Core data structures for Code Whisperer
 

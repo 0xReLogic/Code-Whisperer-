@@ -469,7 +469,7 @@ impl FunctionSignatureDetector {
         }
     }
 
-    fn analyze_semantic_patterns(&self, function_names: &[String]) -> SemanticPatterns {
+    fn analyze_semantic_patterns(&self, _function_names: &[String]) -> SemanticPatterns {
         // TODO: Implement more sophisticated semantic analysis
         SemanticPatterns {
             domain_specific_prefixes: HashMap::new(),

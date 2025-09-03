@@ -251,7 +251,7 @@ impl PatternExtractor {
     }
 
     /// Analyze naming conventions from AST
-    fn analyze_naming_conventions(&self, ast: &ParsedAst, language: &str) -> NamingConventions {
+    fn analyze_naming_conventions(&self, _ast: &ParsedAst, _language: &str) -> NamingConventions {
         let mut function_names = Vec::new();
         let mut variable_names = Vec::new();
         let mut class_names = Vec::new();
