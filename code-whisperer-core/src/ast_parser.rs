@@ -537,7 +537,7 @@ fn main() {
         let ast = result.unwrap();
         let patterns = parser.extract_patterns(&ast, "javascript");
         // Empty code should still produce a valid (possibly empty) pattern list
-        // patterns is a Vec, so we just check if it's empty
+        // patterns is a Vec, so we just check if it's empty or not empty (both are valid)
         assert!(patterns.is_empty() || !patterns.is_empty()); // This will always pass, just testing that it doesn't panic
     }
 
