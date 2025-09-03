@@ -4,7 +4,7 @@
   "description": "Intelligent IDE extension that learns your coding patterns and provides personalized suggestions",
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.74.0"
+    "vscode": "^1.80.0"
   },
   "categories": [
     "Other"
@@ -48,7 +48,7 @@
     "clean": "rimraf out && rimraf node_modules"
   },
   "devDependencies": {
-    "@types/vscode": "^1.74.0",
+    "@types/vscode": "^1.80.0",
     "@types/glob": "^8.1.0",
     "@types/mocha": "^10.0.1",
     "@types/node": "16.x",
@@ -60,6 +60,5 @@
     "@typescript-eslint/parser": "^5.54.1"
   },
   "dependencies": {
-    "vscode": "^1.74.0"
   }
 }

@@ -6,7 +6,7 @@ use std::collections::HashMap;
 // allocator.
 #[cfg(feature = "wee_alloc")]
 #[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::INIT;
+static ALLOC: wee_alloc::WeeAlloc::INIT;
 
 // This is like the `main` function, except for JavaScript.
 #[wasm_bindgen(start)]
@@ -27,6 +27,12 @@ extern "C" {
     #[wasm_bindgen(js_namespace = console)]
     fn log(s: &str);
 }
+
+// Module declarations
+mod ast_parser;
+
+// Re-export for easier access
+pub use ast_parser::AstParser;
 
 // Core data structures for Code Whisperer
 
@@ -108,7 +114,7 @@ pub struct PatternFeedback {
 }
 
 #[wasm_bindgen]
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct CodingPattern {
     id: String,
     pattern_type: PatternType,
@@ -144,7 +150,20 @@ impl CodingPattern {
             },
             confidence,
             frequency: 1,
-            last_seen: js_sys::Date::now().to_string(),
+            last_seen: {
+                #[cfg(target_arch = "wasm32")]
+                {
+                    js_sys::Date::now().to_string()
+                }
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_millis()
+                        .to_string()
+                }
+            },
             source_files: vec![],
             user_feedback: vec![],
         }
@@ -221,41 +240,41 @@ impl CodingPattern {
 pub struct PatternAnalyzer {
     patterns: Vec<CodingPattern>,
     language_stats: HashMap<String, u32>,
+    ast_parser: AstParser,
 }
 
 #[wasm_bindgen]
 impl PatternAnalyzer {
     #[wasm_bindgen(constructor)]
     pub fn new() -> PatternAnalyzer {
-        console_log!("Pattern Analyzer initialized with enhanced data structures");
+        console_log!("Pattern Analyzer initialized with enhanced AST parsing capabilities");
         PatternAnalyzer {
             patterns: Vec::new(),
             language_stats: HashMap::new(),
+            ast_parser: AstParser::new(),
         }
     }
 
     #[wasm_bindgen]
     pub fn analyze_code(&mut self, code: &str, language: &str) -> Vec<CodingPattern> {
-        console_log!("Analyzing {} characters of {} code", code.len(), language);
+        console_log!("Analyzing {} characters of {} code using AST parser", code.len(), language);
 
         let mut detected_patterns = Vec::new();
 
         // Update language statistics
         *self.language_stats.entry(language.to_string()).or_insert(0) += 1;
 
-        // Pattern detection based on language
-        match language.to_lowercase().as_str() {
-            "javascript" | "typescript" => {
-                detected_patterns.extend(self.analyze_javascript(code));
-            },
-            "python" => {
-                detected_patterns.extend(self.analyze_python(code));
-            },
-            "rust" => {
-                detected_patterns.extend(self.analyze_rust(code));
-            },
-            _ => {
-                detected_patterns.extend(self.analyze_generic(code));
+        // Try AST-based parsing first
+        match self.ast_parser.parse_code(code, language) {
+            Ok(ast) => {
+                console_log!("Successfully parsed {} code with AST", language);
+                let ast_patterns = self.ast_parser.extract_patterns(&ast, language);
+                detected_patterns.extend(ast_patterns);
+            }
+            Err(err) => {
+                console_log!("AST parsing failed for {}: {}, falling back to regex", language, err);
+                // Fallback to regex-based parsing
+                detected_patterns.extend(self.analyze_with_regex(code, language));
             }
         }
 
@@ -264,12 +283,35 @@ impl PatternAnalyzer {
             self.patterns.push(pattern.clone());
         }
 
+        console_log!("Detected {} patterns", detected_patterns.len());
         detected_patterns
     }
 
-    fn analyze_javascript(&self, code: &str) -> Vec<CodingPattern> {
+    fn analyze_with_regex(&self, code: &str, language: &str) -> Vec<CodingPattern> {
         let mut patterns = Vec::new();
 
+        match language.to_lowercase().as_str() {
+            "javascript" | "typescript" => {
+                patterns.extend(self.analyze_javascript_regex(code));
+            },
+            "python" => {
+                patterns.extend(self.analyze_python_regex(code));
+            },
+            "rust" => {
+                patterns.extend(self.analyze_rust_regex(code));
+            },
+            _ => {
+                patterns.extend(self.analyze_generic_regex(code));
+            }
+        }
+
+        patterns
+    }
+
+    fn analyze_javascript_regex(&self, code: &str) -> Vec<CodingPattern> {
+        let mut patterns = Vec::new();
+
+        // Function patterns
         if code.contains("function") || code.contains("=>") {
             let pattern = CodingPattern::new(
                 format!("js_func_{}", js_sys::Date::now() as u64),
@@ -280,22 +322,24 @@ impl PatternAnalyzer {
             patterns.push(pattern);
         }
 
-        if code.contains("if ") || code.contains("if(") {
+        // Variable patterns
+        if code.contains("const ") || code.contains("let ") || code.contains("var ") {
             let pattern = CodingPattern::new(
-                format!("js_cond_{}", js_sys::Date::now() as u64),
-                "conditional_statement".to_string(),
+                format!("js_var_{}", js_sys::Date::now() as u64),
+                "variable_declaration".to_string(),
                 "javascript".to_string(),
-                0.7,
+                0.6,
             );
             patterns.push(pattern);
         }
 
-        if code.contains("for ") || code.contains("while ") {
+        // Class patterns
+        if code.contains("class ") {
             let pattern = CodingPattern::new(
-                format!("js_loop_{}", js_sys::Date::now() as u64),
-                "loop_construct".to_string(),
+                format!("js_class_{}", js_sys::Date::now() as u64),
+                "class_definition".to_string(),
                 "javascript".to_string(),
-                0.6,
+                0.7,
             );
             patterns.push(pattern);
         }
@@ -303,7 +347,7 @@ impl PatternAnalyzer {
         patterns
     }
 
-    fn analyze_python(&self, code: &str) -> Vec<CodingPattern> {
+    fn analyze_python_regex(&self, code: &str) -> Vec<CodingPattern> {
         let mut patterns = Vec::new();
 
         if code.contains("def ") {
@@ -316,22 +360,12 @@ impl PatternAnalyzer {
             patterns.push(pattern);
         }
 
-        if code.contains("if ") {
+        if code.contains("class ") {
             let pattern = CodingPattern::new(
-                format!("py_cond_{}", js_sys::Date::now() as u64),
-                "conditional_statement".to_string(),
+                format!("py_class_{}", js_sys::Date::now() as u64),
+                "class_definition".to_string(),
                 "python".to_string(),
                 0.7,
-            );
-            patterns.push(pattern);
-        }
-
-        if code.contains("for ") || code.contains("while ") {
-            let pattern = CodingPattern::new(
-                format!("py_loop_{}", js_sys::Date::now() as u64),
-                "loop_construct".to_string(),
-                "python".to_string(),
-                0.6,
             );
             patterns.push(pattern);
         }
@@ -339,7 +373,7 @@ impl PatternAnalyzer {
         patterns
     }
 
-    fn analyze_rust(&self, code: &str) -> Vec<CodingPattern> {
+    fn analyze_rust_regex(&self, code: &str) -> Vec<CodingPattern> {
         let mut patterns = Vec::new();
 
         if code.contains("fn ") {
@@ -352,22 +386,12 @@ impl PatternAnalyzer {
             patterns.push(pattern);
         }
 
-        if code.contains("if ") {
+        if code.contains("struct ") {
             let pattern = CodingPattern::new(
-                format!("rs_cond_{}", js_sys::Date::now() as u64),
-                "conditional_statement".to_string(),
+                format!("rs_struct_{}", js_sys::Date::now() as u64),
+                "class_definition".to_string(),
                 "rust".to_string(),
                 0.7,
-            );
-            patterns.push(pattern);
-        }
-
-        if code.contains("for ") || code.contains("while ") {
-            let pattern = CodingPattern::new(
-                format!("rs_loop_{}", js_sys::Date::now() as u64),
-                "loop_construct".to_string(),
-                "rust".to_string(),
-                0.6,
             );
             patterns.push(pattern);
         }
@@ -375,7 +399,7 @@ impl PatternAnalyzer {
         patterns
     }
 
-    fn analyze_generic(&self, code: &str) -> Vec<CodingPattern> {
+    fn analyze_generic_regex(&self, code: &str) -> Vec<CodingPattern> {
         let mut patterns = Vec::new();
 
         // Generic pattern detection

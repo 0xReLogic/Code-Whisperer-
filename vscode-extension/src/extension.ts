@@ -1,7 +1,34 @@
 import * as vscode from 'vscode';
 
-export function activate(context: vscode.ExtensionContext) {
-    console.log('Code Whisperer extension is now active!');
+// Dynamically import the WASM module
+let wasmModule: any = null;
+
+async function loadWasmModule(): Promise<any> {
+    if (wasmModule) {
+        return wasmModule;
+    }
+
+    try {
+        // For now, we'll use a simple approach
+        // TODO: Implement proper WASM loading
+        vscode.window.showInformationMessage('WASM module loading placeholder');
+        return null;
+    } catch (error) {
+        vscode.window.showErrorMessage(`Failed to load WASM module: ${error}`);
+        throw error;
+    }
+}
+
+export async function activate(context: vscode.ExtensionContext) {
+    vscode.window.showInformationMessage('Code Whisperer extension is now active!');
+
+    // Load the WASM module
+    try {
+        await loadWasmModule();
+        vscode.window.showInformationMessage('WASM module loaded successfully');
+    } catch (error) {
+        vscode.window.showErrorMessage('Failed to load Code Whisperer core module');
+    }
 
     // Register the analyze code command
     let analyzeCodeCommand = vscode.commands.registerCommand('codeWhisperer.analyzeCode', async () => {
@@ -48,5 +75,5 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
-    console.log('Code Whisperer extension is now deactivated!');
+    vscode.window.showInformationMessage('Code Whisperer extension is now deactivated!');
 }

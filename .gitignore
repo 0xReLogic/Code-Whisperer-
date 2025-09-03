@@ -1,6 +1,5 @@
 # Rust
 target/
-Cargo.lock
 
 # WebAssembly
 code-whisperer-core/pkg/
