@@ -2,13 +2,14 @@ use crate::{CodingPattern, ast_parser::{AstParser, ParsedAst}};
 use std::collections::HashMap;
 use regex::Regex;
 use lazy_static::lazy_static;
+use serde::{Serialize, Deserialize}; // Tambah ini
 
 /// Pattern extraction engine that analyzes code to identify coding patterns
 pub struct PatternExtractor {
     parser: AstParser,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)] // Tambah Serialize, Deserialize
 pub struct PatternAnalysis {
     pub patterns: Vec<CodingPattern>,
     pub style_metrics: StyleMetrics,
@@ -16,7 +17,7 @@ pub struct PatternAnalysis {
     pub structure_patterns: StructurePatterns,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)] // Tambah Serialize, Deserialize
 pub struct StyleMetrics {
     pub indentation_type: IndentationType,
     pub indentation_size: u32,
@@ -26,21 +27,21 @@ pub struct StyleMetrics {
     pub trailing_commas: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum IndentationType {
     Spaces,
     Tabs,
     Mixed,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum BraceStyle {
     SameLine,    // K&R style: if (condition) {
     NextLine,    // Allman style: if (condition)\n{
     Mixed,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NamingConventions {
     pub function_naming: NamingStyle,
     pub variable_naming: NamingStyle,
@@ -49,7 +50,7 @@ pub struct NamingConventions {
     pub file_naming: NamingStyle,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum NamingStyle {
     CamelCase,      // myFunction
     PascalCase,     // MyFunction
@@ -60,7 +61,7 @@ pub enum NamingStyle {
     Unknown,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StructurePatterns {
     pub preferred_file_organization: FileOrganization,
     pub function_length_preference: u32,
@@ -68,7 +69,7 @@ pub struct StructurePatterns {
     pub import_organization: ImportStyle,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum FileOrganization {
     ImportsFirst,
     ClassesFirst,
@@ -76,7 +77,7 @@ pub enum FileOrganization {
     Mixed,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ClassStructure {
     PropertiesFirst,
     ConstructorFirst,
@@ -84,7 +85,7 @@ pub enum ClassStructure {
     Mixed,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ImportStyle {
     Grouped,
     Alphabetical,

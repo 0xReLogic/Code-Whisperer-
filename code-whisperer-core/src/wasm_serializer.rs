@@ -130,7 +130,7 @@ impl WasmSerializer {
             patterns_found: comprehensive_analysis
                 .as_ref()
                 .and_then(|a| a.patterns.as_ref())
-                .map(|p| p.function_patterns.len() + p.style_patterns.len())
+                .map(|p| p.patterns.len())
                 .unwrap_or(0),
             suggestions_generated: comprehensive_analysis
                 .as_ref()
@@ -144,7 +144,7 @@ impl WasmSerializer {
                     if suggestions.is_empty() {
                         0.0
                     } else {
-                        suggestions.iter().map(|s| s.confidence).sum::<f32>() / suggestions.len() as f32
+                        suggestions.iter().map(|s| s.confidence_score).sum::<f32>() / suggestions.len() as f32
                     }
                 })
                 .unwrap_or(0.0),
@@ -164,12 +164,16 @@ impl WasmSerializer {
                     .iter()
                     .map(|s| SerializableSuggestion {
                         id: s.id.clone(),
-                        suggestion_type: s.suggestion_type.clone(),
-                        content: s.content.clone(),
+                        suggestion_type: format!("{:?}", s.suggestion_type),
+                        content: s.suggested_code.clone(),
                         description: s.description.clone(),
-                        confidence: s.confidence,
-                        context_score: s.context_score,
-                        metadata: s.metadata.clone(),
+                        confidence: s.confidence_score,
+                        context_score: s.context_relevance,
+                        metadata: {
+                            let mut map = HashMap::new();
+                            map.insert("reasoning".to_string(), s.reasoning.clone());
+                            map
+                        },
                     })
                     .collect();
                 serde_json::to_string(&serializable_suggestions).ok()
@@ -195,7 +199,7 @@ impl WasmSerializer {
             language: "unknown".to_string(), // Will be set by the caller
             code_length: 0, // Will be set by the caller
             patterns_found: patterns
-                .map(|p| p.function_patterns.len() + p.style_patterns.len())
+                .map(|p| p.patterns.len())
                 .unwrap_or(0),
             suggestions_generated: suggestions.map(|s| s.len()).unwrap_or(0),
             confidence_score: suggestions
@@ -203,7 +207,7 @@ impl WasmSerializer {
                     if suggestions.is_empty() {
                         0.0
                     } else {
-                        suggestions.iter().map(|s| s.confidence).sum::<f32>() / suggestions.len() as f32
+                        suggestions.iter().map(|s| s.confidence_score).sum::<f32>() / suggestions.len() as f32
                     }
                 })
                 .unwrap_or(0.0),

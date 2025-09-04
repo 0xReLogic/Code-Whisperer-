@@ -9,13 +9,7 @@ use std::collections::HashMap;
 static ALLOC: wee_alloc::WeeAlloc::INIT;
 
 // This is like the `main` function, except for JavaScript.
-#[wasm_bindgen(start)]
-pub fn main() {
-    // This provides better error messages in debug mode.
-    // It's disabled in release mode so it doesn't bloat up the file size.
-    #[cfg(feature = "console_error_panic_hook")]
-    console_error_panic_hook::set_once();
-}
+// Removed duplicate start function - using wasm_init() in wasm module instead
 
 // Macro for console logging
 macro_rules! console_log {
@@ -32,7 +26,7 @@ extern "C" {
 mod ast_parser;
 mod pattern_extractor;
 mod style_analyzer;
-mod function_signature_analyzer;
+mod function_signature_detector; // Ganti dari function_signature_analyzer
 mod variable_naming_recognizer;
 mod code_structure_analyzer;
 
@@ -46,37 +40,23 @@ mod suggestion_generation_engine;
 mod context_aware_filter;
 
 // WASM serialization for browser integration
-mod wasm_serializer;
-mod wasm_interface;
+pub mod wasm_serializer;
+pub mod wasm_interface;
 
 // Re-export main components
 pub use ast_parser::AstParser;
 pub use pattern_extractor::{PatternExtractor, PatternAnalysis};
-pub use style_analyzer::{StyleAnalyzer, StyleAnalysis};
-pub use function_signature_analyzer::{FunctionSignatureAnalyzer, FunctionSignatureAnalysis};
+pub use style_analyzer::{CodingStyleAnalyzer, DetailedStyleAnalysis}; // Perbaiki nama
+pub use function_signature_detector::{FunctionSignatureDetector, FunctionSignatureAnalysis}; // Perbaiki nama
 pub use variable_naming_recognizer::{VariableNamingRecognizer, VariableNamingAnalysis};
 pub use code_structure_analyzer::{CodeStructureAnalyzer, CodeStructureAnalysis};
-pub use user_behavior_tracker::{UserBehaviorTracker, UserBehaviorAnalysis};
-pub use local_storage_manager::{LocalStorageManager, PatternData};
+pub use user_behavior_tracker::{UserBehaviorTracker, BehaviorAnalysis}; // Perbaiki nama
+pub use local_storage_manager::{LocalStorageManager, UserPatternData}; // Perbaiki nama
 pub use pattern_scoring_engine::{PatternScoringEngine, ScoringResult};
 pub use suggestion_generation_engine::{SuggestionGenerationEngine, SuggestionResult};
-pub use context_aware_filter::{ContextAwareFilter, FilteredSuggestion};
+pub use context_aware_filter::{ContextAwareFilter, CodingContext}; // Perbaiki nama
 pub use wasm_serializer::{WasmSerializer, SerializableAnalysisResult, ComprehensiveAnalysis};
 pub use wasm_interface::{CodeWhispererEngine, EngineConfig, EditorContext};
-
-// Re-export for easier access
-pub use ast_parser::AstParser;
-pub use pattern_extractor::{PatternExtractor, PatternAnalysis, StyleMetrics, NamingConventions, StructurePatterns};
-pub use style_analyzer::{CodingStyleAnalyzer, DetailedStyleAnalysis};
-pub use function_signature_detector::{FunctionSignatureDetector, FunctionSignatureAnalysis, FunctionPattern};
-pub use variable_naming_recognizer::{VariableNamingRecognizer, VariableNamingAnalysis};
-pub use code_structure_analyzer::{CodeStructureAnalyzer, CodeStructureAnalysis};
-pub use user_behavior_tracker::{UserBehaviorTracker, BehaviorAnalysis};
-pub use local_storage_manager::{LocalStorageManager, UserPatternData, StorageResult};
-pub use pattern_scoring_engine::{PatternScoringEngine, ScoringResult, PatternScore};
-pub use suggestion_generation_engine::{SuggestionGenerationEngine, SuggestionResult, CodeSuggestion};
-pub use context_aware_filter::{ContextAwareFilter, CodingContext, ProjectInfo};
-pub use wasm_serializer::{WasmSerializer, SerializableAnalysisResult, ComprehensiveAnalysis};
 
 // Core data structures for Code Whisperer
 

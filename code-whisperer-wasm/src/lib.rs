@@ -54,20 +54,16 @@ impl WasmPerformanceMonitor {
 
     #[wasm_bindgen]
     pub fn get_memory_usage(&self) -> String {
-        if let Some(memory) = js_sys::WebAssembly::Memory::from(wasm_bindgen::memory()) {
-            let buffer = memory.buffer();
-            let byte_length = buffer.byte_length();
-            
-            serde_json::to_string(&serde_json::json!({
-                "allocated_bytes": byte_length,
-                "allocated_mb": (byte_length as f64) / (1024.0 * 1024.0),
-                "timestamp": self.performance.now()
-            })).unwrap_or_default()
-        } else {
-            serde_json::to_string(&serde_json::json!({
-                "error": "Unable to access WASM memory"
-            })).unwrap_or_default()
-        }
+        let memory = wasm_bindgen::memory().unchecked_into::<js_sys::WebAssembly::Memory>();
+        let buffer = memory.buffer();
+        let array = js_sys::Uint8Array::new(&buffer);
+        let byte_length = array.byte_length();
+        
+        serde_json::to_string(&serde_json::json!({
+            "allocated_bytes": byte_length,
+            "allocated_mb": (byte_length as f64) / (1024.0 * 1024.0),
+            "timestamp": self.performance.now()
+        })).unwrap_or_default()
     }
 }
 
@@ -263,9 +259,10 @@ impl WasmMemoryOptimizer {
     /// Get memory pressure information
     #[wasm_bindgen]
     pub fn get_memory_pressure() -> String {
-        let memory = wasm_bindgen::memory();
-        let buffer = js_sys::WebAssembly::Memory::from(memory).buffer();
-        let byte_length = buffer.byte_length();
+        let memory = wasm_bindgen::memory().unchecked_into::<js_sys::WebAssembly::Memory>();
+        let buffer = memory.buffer();
+        let array = js_sys::Uint8Array::new(&buffer);
+        let byte_length = array.byte_length();
         
         // Estimate memory pressure based on usage
         let mb_used = (byte_length as f64) / (1024.0 * 1024.0);
@@ -314,9 +311,10 @@ pub fn wasm_init() {
     web_sys::console::log_1(&"Code Whisperer WASM module initialized with optimizations".into());
     
     // Log memory information
-    let memory = wasm_bindgen::memory();
-    let buffer = js_sys::WebAssembly::Memory::from(memory).buffer();
-    let initial_size = buffer.byte_length();
+    let memory = wasm_bindgen::memory().unchecked_into::<js_sys::WebAssembly::Memory>();
+    let buffer = memory.buffer();
+    let array = js_sys::Uint8Array::new(&buffer);
+    let initial_size = array.byte_length();
     
     web_sys::console::log_1(&format!(
         "Initial WASM memory: {:.2} MB", 
@@ -355,7 +353,7 @@ pub fn benchmark_analysis(code: &str, language: &str, iterations: usize) -> Stri
 
     let avg_duration = durations.iter().sum::<f64>() / durations.len() as f64;
     let min_duration = durations.iter().fold(f64::INFINITY, |a, &b| a.min(b));
-    let max_duration = durations.iter().fold(0.0, |a, &b| a.max(b));
+    let max_duration = durations.iter().fold(0.0f64, |a, &b| a.max(b));
 
     serde_json::to_string(&serde_json::json!({
         "iterations": iterations,
