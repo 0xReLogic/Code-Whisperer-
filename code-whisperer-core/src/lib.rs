@@ -28,18 +28,41 @@ extern "C" {
     fn log(s: &str);
 }
 
-// Module declarations
+// Core analysis modules
 mod ast_parser;
 mod pattern_extractor;
 mod style_analyzer;
-mod function_signature_detector;
+mod function_signature_analyzer;
 mod variable_naming_recognizer;
 mod code_structure_analyzer;
+
+// User behavior and storage
 mod user_behavior_tracker;
 mod local_storage_manager;
+
+// Pattern scoring and suggestion generation
 mod pattern_scoring_engine;
 mod suggestion_generation_engine;
 mod context_aware_filter;
+
+// WASM serialization for browser integration
+mod wasm_serializer;
+mod wasm_interface;
+
+// Re-export main components
+pub use ast_parser::AstParser;
+pub use pattern_extractor::{PatternExtractor, PatternAnalysis};
+pub use style_analyzer::{StyleAnalyzer, StyleAnalysis};
+pub use function_signature_analyzer::{FunctionSignatureAnalyzer, FunctionSignatureAnalysis};
+pub use variable_naming_recognizer::{VariableNamingRecognizer, VariableNamingAnalysis};
+pub use code_structure_analyzer::{CodeStructureAnalyzer, CodeStructureAnalysis};
+pub use user_behavior_tracker::{UserBehaviorTracker, UserBehaviorAnalysis};
+pub use local_storage_manager::{LocalStorageManager, PatternData};
+pub use pattern_scoring_engine::{PatternScoringEngine, ScoringResult};
+pub use suggestion_generation_engine::{SuggestionGenerationEngine, SuggestionResult};
+pub use context_aware_filter::{ContextAwareFilter, FilteredSuggestion};
+pub use wasm_serializer::{WasmSerializer, SerializableAnalysisResult, ComprehensiveAnalysis};
+pub use wasm_interface::{CodeWhispererEngine, EngineConfig, EditorContext};
 
 // Re-export for easier access
 pub use ast_parser::AstParser;
@@ -53,6 +76,7 @@ pub use local_storage_manager::{LocalStorageManager, UserPatternData, StorageRes
 pub use pattern_scoring_engine::{PatternScoringEngine, ScoringResult, PatternScore};
 pub use suggestion_generation_engine::{SuggestionGenerationEngine, SuggestionResult, CodeSuggestion};
 pub use context_aware_filter::{ContextAwareFilter, CodingContext, ProjectInfo};
+pub use wasm_serializer::{WasmSerializer, SerializableAnalysisResult, ComprehensiveAnalysis};
 
 // Core data structures for Code Whisperer
 

@@ -1,7 +1,9 @@
 [workspace]
 members = [
     "code-whisperer-core",
+    "code-whisperer-wasm",
 ]
+resolver = "2"
 
 [workspace.package]
 version = "0.1.0"

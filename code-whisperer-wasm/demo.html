@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Whisperer WASM Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .code-editor {
+            width: 100%;
+            height: 300px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            tab-size: 2;
+        }
+        .suggestions-panel {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 400px;
+            overflow-y: auto;
+            background-color: #fafafa;
+        }
+        .suggestion {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .suggestion:hover {
+            background-color: #e8f4fd;
+        }
+        .suggestion-code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background-color: #f8f8f8;
+            padding: 5px;
+            border-radius: 3px;
+            margin: 5px 0;
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .metric {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .metric-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background-color: #007acc;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #005a9e;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007acc;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background-color: #cce7ff;
+            color: #004085;
+            border: 1px solid #b3d7ff;
+        }
+        .log-panel {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #333;
+        }
+        select, input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧙‍♂️ Code Whisperer WASM Demo</h1>
+    
+    <div class="container">
+        <h2>Configuration</h2>
+        <div class="controls">
+            <select id="language">
+                <option value="javascript">JavaScript</option>
+                <option value="typescript">TypeScript</option>
+                <option value="python">Python</option>
+                <option value="rust">Rust</option>
+            </select>
+            <input type="number" id="maxSuggestions" value="10" min="1" max="20" placeholder="Max suggestions">
+            <input type="number" id="confidenceThreshold" value="0.6" min="0" max="1" step="0.1" placeholder="Confidence threshold">
+            <label><input type="checkbox" id="enableLearning" checked> Enable Learning</label>
+            <label><input type="checkbox" id="enableStorage" checked> Enable Storage</label>
+            <label><input type="checkbox" id="enableFiltering" checked> Context Filtering</label>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Code Editor</h2>
+        <textarea class="code-editor" id="codeEditor" placeholder="Enter your code here...">function fibonacci(n) {
+    if (n <= 1) return n;
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+// Start typing here for suggestions...</textarea>
+        
+        <div class="controls">
+            <button class="btn btn-primary" id="analyzeBtn">
+                <span id="analyzeText">🔍 Analyze & Get Suggestions</span>
+                <span id="analyzeSpinner" class="loading" style="display: none;"></span>
+            </button>
+            <button class="btn btn-secondary" id="benchmarkBtn">📊 Run Benchmark</button>
+            <button class="btn btn-secondary" id="clearCacheBtn">🗑️ Clear Cache</button>
+            <button class="btn btn-secondary" id="exportBtn">💾 Export Patterns</button>
+        </div>
+
+        <div id="status"></div>
+    </div>
+
+    <div class="metrics">
+        <div class="metric">
+            <div class="metric-value" id="analysisTime">0</div>
+            <div class="metric-label">Analysis Time (ms)</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value" id="memoryUsage">0</div>
+            <div class="metric-label">Memory Usage (MB)</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value" id="suggestionCount">0</div>
+            <div class="metric-label">Suggestions Generated</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value" id="confidenceAvg">0</div>
+            <div class="metric-label">Avg Confidence</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Suggestions</h2>
+        <div id="suggestionsPanel" class="suggestions-panel">
+            <div style="padding: 20px; text-align: center; color: #666;">
+                Run analysis to see suggestions here
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Performance Monitor</h2>
+        <div class="log-panel" id="logPanel"></div>
+    </div>
+
+    <script type="module">
+        let wasmModule = null;
+        let engine = null;
+        let performanceMonitor = null;
+        let cache = null;
+        
+        async function initializeWasm() {
+            try {
+                // Try to load the WASM module
+                wasmModule = await import('./pkg/code_whisperer_wasm.js');
+                await wasmModule.default();
+                
+                log('✅ WASM module loaded successfully');
+                
+                // Initialize components
+                const config = wasmModule.create_default_config();
+                engine = new wasmModule.CodeWhispererEngine(config);
+                performanceMonitor = new wasmModule.WasmPerformanceMonitor();
+                cache = new wasmModule.WasmCache(100);
+                
+                log('✅ Code Whisperer engine initialized');
+                updateStatus('WASM module ready', 'success');
+                
+                return true;
+            } catch (error) {
+                log(`❌ Failed to load WASM module: ${error.message}`);
+                updateStatus(`Failed to load WASM: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        function log(message) {
+            const logPanel = document.getElementById('logPanel');
+            const timestamp = new Date().toLocaleTimeString();
+            logPanel.innerHTML += `[${timestamp}] ${message}\n`;
+            logPanel.scrollTop = logPanel.scrollHeight;
+            console.log(message);
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+        }
+
+        function updateMetrics(analysisResult) {
+            try {
+                const result = JSON.parse(analysisResult);
+                
+                document.getElementById('analysisTime').textContent = 
+                    result.processing_time_ms || 0;
+                
+                if (result.comprehensive_analysis && result.comprehensive_analysis.suggestions) {
+                    const suggestions = result.comprehensive_analysis.suggestions;
+                    document.getElementById('suggestionCount').textContent = suggestions.length;
+                    
+                    const avgConfidence = suggestions.length > 0 
+                        ? (suggestions.reduce((sum, s) => sum + (s.confidence || 0), 0) / suggestions.length).toFixed(2)
+                        : 0;
+                    document.getElementById('confidenceAvg').textContent = avgConfidence;
+                }
+
+                // Update memory usage
+                if (performanceMonitor) {
+                    const memoryInfo = JSON.parse(performanceMonitor.get_memory_usage());
+                    document.getElementById('memoryUsage').textContent = 
+                        memoryInfo.allocated_mb ? memoryInfo.allocated_mb.toFixed(2) : 0;
+                }
+            } catch (error) {
+                log(`⚠️ Error updating metrics: ${error.message}`);
+            }
+        }
+
+        function displaySuggestions(analysisResult) {
+            try {
+                const result = JSON.parse(analysisResult);
+                const panel = document.getElementById('suggestionsPanel');
+                
+                if (!result.comprehensive_analysis || !result.comprehensive_analysis.suggestions || 
+                    result.comprehensive_analysis.suggestions.length === 0) {
+                    panel.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">No suggestions available</div>';
+                    return;
+                }
+
+                const suggestions = result.comprehensive_analysis.suggestions;
+                panel.innerHTML = '';
+
+                suggestions.forEach((suggestion, index) => {
+                    const suggestionElement = document.createElement('div');
+                    suggestionElement.className = 'suggestion';
+                    suggestionElement.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong>Suggestion ${index + 1}</strong>
+                            <span style="background: #007acc; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8em;">
+                                ${((suggestion.confidence || 0) * 100).toFixed(0)}%
+                            </span>
+                        </div>
+                        <div style="margin: 5px 0; color: #666;">${suggestion.description || 'No description'}</div>
+                        <div class="suggestion-code">${suggestion.code || suggestion.content || 'No code provided'}</div>
+                        <div style="font-size: 0.8em; color: #888;">
+                            Type: ${suggestion.suggestion_type || 'unknown'} | 
+                            Context: ${suggestion.context_score ? (suggestion.context_score * 100).toFixed(0) + '%' : 'N/A'}
+                        </div>
+                    `;
+                    
+                    suggestionElement.addEventListener('click', () => {
+                        applysuggestion(suggestion);
+                    });
+                    
+                    panel.appendChild(suggestionElement);
+                });
+            } catch (error) {
+                log(`⚠️ Error displaying suggestions: ${error.message}`);
+                document.getElementById('suggestionsPanel').innerHTML = 
+                    '<div style="padding: 20px; text-align: center; color: #red;">Error displaying suggestions</div>';
+            }
+        }
+
+        function applySuggestion(suggestion) {
+            const editor = document.getElementById('codeEditor');
+            const cursorPos = editor.selectionStart;
+            const code = editor.value;
+            
+            // Simple insertion at cursor position
+            const newCode = code.slice(0, cursorPos) + (suggestion.code || suggestion.content || '') + code.slice(cursorPos);
+            editor.value = newCode;
+            
+            // Provide feedback to the engine
+            if (engine) {
+                engine.provide_feedback(suggestion.id || 'unknown', true, 'Applied via demo');
+            }
+            
+            log(`✅ Applied suggestion: ${suggestion.description || 'Unknown'}`);
+        }
+
+        async function analyzeCode() {
+            if (!engine) {
+                updateStatus('WASM module not initialized', 'error');
+                return;
+            }
+
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const analyzeText = document.getElementById('analyzeText');
+            const analyzeSpinner = document.getElementById('analyzeSpinner');
+            
+            try {
+                // Update UI
+                analyzeBtn.disabled = true;
+                analyzeText.style.display = 'none';
+                analyzeSpinner.style.display = 'inline-block';
+                updateStatus('Analyzing code...', 'info');
+
+                // Get configuration
+                const language = document.getElementById('language').value;
+                const maxSuggestions = parseInt(document.getElementById('maxSuggestions').value);
+                const confidenceThreshold = parseFloat(document.getElementById('confidenceThreshold').value);
+                const enableLearning = document.getElementById('enableLearning').checked;
+                const enableStorage = document.getElementById('enableStorage').checked;
+                const enableFiltering = document.getElementById('enableFiltering').checked;
+
+                // Create configuration
+                const config = wasmModule.create_default_config();
+                config.set_max_suggestions(maxSuggestions);
+                config.set_confidence_threshold(confidenceThreshold);
+                config.set_enable_learning(enableLearning);
+                config.set_enable_storage(enableStorage);
+                config.set_enable_context_filtering(enableFiltering);
+
+                // Create editor context
+                const context = new wasmModule.EditorContext(
+                    'demo.js',
+                    language,
+                    document.getElementById('codeEditor').selectionStart || 0
+                );
+
+                const code = document.getElementById('codeEditor').value;
+                
+                // Start performance monitoring
+                performanceMonitor.start_timing('analysis');
+                
+                // Perform analysis
+                const analysisResult = engine.analyze_and_suggest(code, context, config);
+                
+                // End performance monitoring
+                const duration = performanceMonitor.end_timing('analysis');
+                
+                log(`🔍 Analysis completed in ${duration ? duration.toFixed(2) : 'unknown'} ms`);
+                
+                // Update UI
+                updateMetrics(analysisResult);
+                displaySuggestions(analysisResult);
+                updateStatus('Analysis completed successfully', 'success');
+                
+            } catch (error) {
+                log(`❌ Analysis failed: ${error.message}`);
+                updateStatus(`Analysis failed: ${error.message}`, 'error');
+            } finally {
+                // Reset UI
+                analyzeBtn.disabled = false;
+                analyzeText.style.display = 'inline';
+                analyzeSpinner.style.display = 'none';
+            }
+        }
+
+        async function runBenchmark() {
+            if (!wasmModule) {
+                updateStatus('WASM module not initialized', 'error');
+                return;
+            }
+
+            const code = document.getElementById('codeEditor').value;
+            const language = document.getElementById('language').value;
+            
+            updateStatus('Running benchmark...', 'info');
+            log('🏃‍♂️ Starting benchmark with 10 iterations...');
+
+            try {
+                const benchmarkResult = wasmModule.benchmark_analysis(code, language, 10);
+                const result = JSON.parse(benchmarkResult);
+                
+                log(`📊 Benchmark Results:`);
+                log(`   Average: ${result.average_duration_ms.toFixed(2)} ms`);
+                log(`   Min: ${result.min_duration_ms.toFixed(2)} ms`);
+                log(`   Max: ${result.max_duration_ms.toFixed(2)} ms`);
+                log(`   Total: ${result.total_duration_ms.toFixed(2)} ms`);
+                
+                updateStatus('Benchmark completed', 'success');
+            } catch (error) {
+                log(`❌ Benchmark failed: ${error.message}`);
+                updateStatus(`Benchmark failed: ${error.message}`, 'error');
+            }
+        }
+
+        function clearCache() {
+            if (cache) {
+                cache.clear();
+                log('🗑️ Cache cleared');
+                updateStatus('Cache cleared', 'success');
+            }
+        }
+
+        function exportPatterns() {
+            if (engine) {
+                const patterns = engine.export_user_patterns('demo_user');
+                if (patterns) {
+                    const blob = new Blob([patterns], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'code_whisperer_patterns.json';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    log('💾 Patterns exported successfully');
+                    updateStatus('Patterns exported', 'success');
+                } else {
+                    log('⚠️ No patterns to export');
+                    updateStatus('No patterns to export', 'info');
+                }
+            }
+        }
+
+        // Initialize everything when the page loads
+        document.addEventListener('DOMContentLoaded', async () => {
+            log('🚀 Initializing Code Whisperer demo...');
+            
+            const initialized = await initializeWasm();
+            
+            if (initialized) {
+                // Set up event listeners
+                document.getElementById('analyzeBtn').addEventListener('click', analyzeCode);
+                document.getElementById('benchmarkBtn').addEventListener('click', runBenchmark);
+                document.getElementById('clearCacheBtn').addEventListener('click', clearCache);
+                document.getElementById('exportBtn').addEventListener('click', exportPatterns);
+
+                // Auto-analyze on code changes (debounced)
+                let analysisTimeout;
+                document.getElementById('codeEditor').addEventListener('input', () => {
+                    clearTimeout(analysisTimeout);
+                    analysisTimeout = setTimeout(() => {
+                        if (document.getElementById('codeEditor').value.trim()) {
+                            analyzeCode();
+                        }
+                    }, 1000);
+                });
+
+                log('✅ Demo ready! Start typing in the code editor.');
+            }
+        });
+
+        // Global error handler
+        window.addEventListener('error', (event) => {
+            log(`💥 Global error: ${event.error.message}`);
+        });
+
+        window.addEventListener('unhandledrejection', (event) => {
+            log(`💥 Unhandled promise rejection: ${event.reason}`);
+        });
+    </script>
+</body>
+</html>

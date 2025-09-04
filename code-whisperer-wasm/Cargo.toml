@@ -1,0 +1,80 @@
+[package]
+name = "code-whisperer-wasm"
+version = "0.1.0"
+edition = "2021"
+description = "Code Whisperer WASM package for browser integration"
+authors = ["Code Whisperer Team"]
+license = "MIT"
+repository = "https://github.com/yourorg/code-whisperer"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+code-whisperer-core = { path = "../code-whisperer-core" }
+
+# WASM-specific dependencies
+wasm-bindgen = "0.2"
+js-sys = "0.3"
+web-sys = { version = "0.3", features = [
+  "console",
+  "Document",
+  "Element",
+  "HtmlElement",
+  "Storage",
+  "Window",
+  "Performance",
+  "PerformanceTiming",
+  "Worker",
+  "MessageEvent",
+  "ErrorEvent",
+] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde-wasm-bindgen = "0.6"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Async support
+wasm-bindgen-futures = "0.4"
+
+# Optional debugging
+console_error_panic_hook = { version = "0.1", optional = true }
+
+[dependencies.chrono]
+version = "0.4"
+features = ["serde", "wasm-bindgen"]
+
+[features]
+default = ["console_error_panic_hook"]
+
+# Build optimizations for production
+[profile.release]
+# Enable link-time optimization for smaller WASM size
+lto = true
+# Optimize for size rather than speed
+opt-level = "s"
+# Enable debug info for better error messages
+debug = true
+# Remove unused code aggressively
+codegen-units = 1
+
+# Development profile for faster compilation
+[profile.dev]
+# Keep debug info for development
+debug = true
+# Faster compilation in development
+opt-level = 0
+
+# WASM-specific configurations
+[package.metadata.wasm-pack.profile.release]
+# Additional optimizations for release builds
+wasm-opt = ["-Oz", "--enable-mutable-globals"]
+
+[package.metadata.wasm-pack.profile.dev]
+# Faster builds for development
+wasm-opt = false
