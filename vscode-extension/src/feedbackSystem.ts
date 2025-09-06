@@ -294,9 +294,9 @@ export class FeedbackCollectionSystem {
             if (!acc[lang]) {
                 acc[lang] = { accepted: 0, total: 0 };
             }
-            acc[lang].total++;
+            acc[lang]!.total++;
             if (f.action === 'accept') {
-                acc[lang].accepted++;
+                acc[lang]!.accepted++;
             }
             return acc;
         }, {} as { [key: string]: { accepted: number; total: number } });
@@ -313,9 +313,9 @@ export class FeedbackCollectionSystem {
             if (!acc[key]) {
                 acc[key] = { accepted: 0, total: 0 };
             }
-            acc[key].total++;
+            acc[key]!.total++;
             if (f.action === 'accept') {
-                acc[key].accepted++;
+                acc[key]!.accepted++;
             }
             return acc;
         }, {} as { [key: string]: { accepted: number; total: number } });

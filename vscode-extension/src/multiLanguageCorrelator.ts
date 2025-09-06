@@ -321,10 +321,12 @@ export class MultiLanguagePatternCorrelator {
             for (let j = i + 1; j < languages.length; j++) {
                 const lang1 = languages[i];
                 const lang2 = languages[j];
-                const patterns1 = languagePatterns.get(lang1)!;
-                const patterns2 = languagePatterns.get(lang2)!;
-                
-                await this.findPatternCorrelationsBetweenLanguages(lang1, lang2, patterns1, patterns2);
+                if (lang1 && lang2) {
+                    const patterns1 = languagePatterns.get(lang1)!;
+                    const patterns2 = languagePatterns.get(lang2)!;
+                    
+                    await this.findPatternCorrelationsBetweenLanguages(lang1, lang2, patterns1, patterns2);
+                }
             }
         }
     }

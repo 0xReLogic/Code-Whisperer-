@@ -451,7 +451,7 @@ export class ContextAwareLearningSystem {
         
         for (const match of [...importMatches, ...requireMatches]) {
             const depMatch = match.match(/['"`]([^'"`]+)['"`]/);
-            if (depMatch && !depMatch[1].startsWith('.')) {
+            if (depMatch?.[1] && !depMatch[1].startsWith('.')) {
                 context.dependencies.push(depMatch[1]);
             }
         }
@@ -638,14 +638,17 @@ export class ContextAwareLearningSystem {
         // Check for contextual patterns that match current context
         for (const contextualPattern of this.contextualPatterns.values()) {
             if (contextualPattern.basePattern.patternId === pattern.patternId) {
-                const contextSimilarity = this.calculateContextSimilarity(
-                    contextualPattern.applicableContexts[0],
-                    currentContext
-                );
-                
-                if (contextSimilarity > 0.7) {
-                    relevanceScore += contextualPattern.performance.contextAccuracy * contextSimilarity;
-                    factors++;
+                const firstContext = contextualPattern.applicableContexts[0];
+                if (firstContext) {
+                    const contextSimilarity = this.calculateContextSimilarity(
+                        firstContext,
+                        currentContext
+                    );
+                    
+                    if (contextSimilarity > 0.7) {
+                        relevanceScore += contextualPattern.performance.contextAccuracy * contextSimilarity;
+                        factors++;
+                    }
                 }
             }
         }

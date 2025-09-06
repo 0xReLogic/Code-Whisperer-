@@ -191,15 +191,17 @@ export class TemporalPatternAnalyzer {
             const prevWindow = windows[i - 1];
             const currentWindow = windows[i];
             
-            const change = this.detectPatternTransition(
-                language,
-                patternType,
-                prevWindow,
-                currentWindow
-            );
-            
-            if (change) {
-                changes.push(change);
+            if (prevWindow && currentWindow) {
+                const change = this.detectPatternTransition(
+                    language,
+                    patternType,
+                    prevWindow,
+                    currentWindow
+                );
+                
+                if (change) {
+                    changes.push(change);
+                }
             }
         }
         
@@ -328,21 +330,23 @@ export class TemporalPatternAnalyzer {
         if (significantChanges.length > 0) {
             const change = significantChanges[0]; // Take the most significant change
             
-            return {
-                changeId: `change_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                timestamp: currentWindow[0]?.timestamp || Date.now(),
-                changeType: this.determineChangeType(change),
-                language,
-                oldPattern: change.from,
-                newPattern: change.to,
-                confidence: change.confidence,
-                evidence: {
-                    oldUsageCount: prevDistribution[change.from] || 0,
-                    newUsageCount: currentDistribution[change.to] || 0,
-                    transitionPeriod: this.calculateTransitionPeriod(prevWindow, currentWindow),
-                    confirmationEvents: Math.min(prevWindow.length, currentWindow.length)
-                }
-            };
+            if (change) {
+                return {
+                    changeId: `change_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    timestamp: currentWindow[0]?.timestamp || Date.now(),
+                    changeType: this.determineChangeType(change),
+                    language,
+                    oldPattern: change.from,
+                    newPattern: change.to,
+                    confidence: change.confidence,
+                    evidence: {
+                        oldUsageCount: prevDistribution[change.from] || 0,
+                        newUsageCount: currentDistribution[change.to] || 0,
+                        transitionPeriod: this.calculateTransitionPeriod(prevWindow, currentWindow),
+                        confirmationEvents: Math.min(prevWindow.length, currentWindow.length)
+                    }
+                };
+            }
         }
         
         return null;

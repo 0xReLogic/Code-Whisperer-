@@ -677,8 +677,9 @@ export class RefactoringPatternDetector {
             this.userBehavior.contextualPreferences[context] = [];
         }
         
-        if (feedback.action === 'accept' && !this.userBehavior.contextualPreferences[context].includes(pattern.type)) {
-            this.userBehavior.contextualPreferences[context].push(pattern.type);
+        const contextPrefs = this.userBehavior.contextualPreferences[context];
+        if (feedback.action === 'accept' && contextPrefs && !contextPrefs.includes(pattern.type)) {
+            contextPrefs.push(pattern.type);
         }
         
         await this.saveData();
