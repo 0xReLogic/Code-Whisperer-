@@ -8,6 +8,18 @@ import { getCompletionProvider } from './completionProvider';
 import { getDiagnosticProvider } from './diagnosticProvider';
 import { getCodeActionProvider } from './codeActionProvider';
 
+// Phase 5: Advanced Intelligence Features
+import { FeedbackCollectionSystem } from './feedbackSystem';
+import { PatternAdaptationEngine } from './patternAdaptationEngine';
+import { TemporalPatternAnalyzer } from './temporalPatternAnalyzer';
+import { ContextAwareLearningSystem } from './contextAwareLearning';
+import { MultiLanguagePatternCorrelator } from './multiLanguageCorrelator';
+import { RefactoringPatternDetector } from './refactoringPatternDetector';
+import { TestingPatternRecognizer } from './testingPatternRecognizer';
+import { DocumentationStyleLearner } from './documentationStyleLearner';
+import { ErrorHandlingPatternAnalyzer } from './errorHandlingPatternAnalyzer';
+import { CodingPersonalityProfiler } from './codingPersonalityProfiler';
+
 // Global extension state
 let outputChannel: vscode.OutputChannel;
 let diagnosticCollection: vscode.DiagnosticCollection;
@@ -58,6 +70,9 @@ export async function activate(context: vscode.ExtensionContext) {
     // Initialize real-time analyzer
     const realTimeAnalyzer = getRealTimeAnalyzer();
     context.subscriptions.push({ dispose: () => realTimeAnalyzer.dispose() });
+
+    // Initialize Phase 5: Advanced Intelligence Features
+    await initializeAdvancedIntelligence(context);
 
     // Register language providers
     registerLanguageProviders(context);
@@ -337,6 +352,71 @@ function registerCommands(context: vscode.ExtensionContext) {
         }
     );
 
+    // Phase 5: Advanced Intelligence Commands
+    const showCodingPersonalityCommand = vscode.commands.registerCommand('codeWhisperer.showCodingPersonality', async () => {
+        const aiSystems = context.globalState.get('advancedIntelligence') as any;
+        if (aiSystems?.personalityProfiler) {
+            const personality = aiSystems.personalityProfiler.getCodingPersonalityInsights();
+            const panel = vscode.window.createWebviewPanel(
+                'codingPersonality',
+                'Your Coding Personality',
+                vscode.ViewColumn.One,
+                {}
+            );
+            panel.webview.html = createPersonalityHTML(personality);
+        }
+    });
+
+    const showFeedbackInsightsCommand = vscode.commands.registerCommand('codeWhisperer.showFeedbackInsights', async () => {
+        const aiSystems = context.globalState.get('advancedIntelligence') as any;
+        if (aiSystems?.feedbackSystem) {
+            const insights = aiSystems.feedbackSystem.getLearningInsights();
+            vscode.window.showInformationMessage(
+                `Learning Insights: ${insights.preferredSuggestionTypes.join(', ')}`
+            );
+        }
+    });
+
+    const analyzeTemporalPatternsCommand = vscode.commands.registerCommand('codeWhisperer.analyzeTemporalPatterns', async () => {
+        const aiSystems = context.globalState.get('advancedIntelligence') as any;
+        if (aiSystems?.temporalAnalyzer) {
+            const insights = aiSystems.temporalAnalyzer.getTemporalInsights();
+            vscode.window.showInformationMessage(
+                `Recent Changes: ${insights.recentChanges.length} coding habit changes detected`
+            );
+        }
+    });
+
+    const generateTestSuggestionsCommand = vscode.commands.registerCommand('codeWhisperer.generateTestSuggestions', async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) return;
+
+        const aiSystems = context.globalState.get('advancedIntelligence') as any;
+        if (aiSystems?.testingRecognizer) {
+            const suggestions = await aiSystems.testingRecognizer.generateTestingSuggestions(editor.document);
+            if (suggestions.length > 0) {
+                vscode.window.showInformationMessage(`Found ${suggestions.length} testing suggestions`);
+            } else {
+                vscode.window.showInformationMessage('No testing suggestions available for this code');
+            }
+        }
+    });
+
+    const analyzeErrorHandlingCommand = vscode.commands.registerCommand('codeWhisperer.analyzeErrorHandling', async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) return;
+
+        const aiSystems = context.globalState.get('advancedIntelligence') as any;
+        if (aiSystems?.errorAnalyzer) {
+            const suggestions = await aiSystems.errorAnalyzer.generateErrorHandlingSuggestions(editor.document);
+            if (suggestions.length > 0) {
+                vscode.window.showInformationMessage(`Found ${suggestions.length} error handling improvements`);
+            } else {
+                vscode.window.showInformationMessage('Your error handling looks good!');
+            }
+        }
+    });
+
     // Register all commands
     context.subscriptions.push(
         analyzeCodeCommand,
@@ -348,7 +428,13 @@ function registerCommands(context: vscode.ExtensionContext) {
         importPatternsCommand,
         breakLongLineCommand,
         extractToVariableCommand,
-        organizeImportsCommand
+        organizeImportsCommand,
+        // Phase 5 commands
+        showCodingPersonalityCommand,
+        showFeedbackInsightsCommand,
+        analyzeTemporalPatternsCommand,
+        generateTestSuggestionsCommand,
+        analyzeErrorHandlingCommand
     );
 }
 
@@ -525,6 +611,96 @@ function setupRealTimeAnalysis(context: vscode.ExtensionContext): void {
     });
 
     context.subscriptions.push(documentChangeListener);
+}
+
+function createPersonalityHTML(personality: any): string {
+    return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Your Coding Personality Profile</title>
+            <style>
+                body { 
+                    font-family: var(--vscode-font-family); 
+                    padding: 20px; 
+                    background-color: var(--vscode-editor-background);
+                    color: var(--vscode-editor-foreground);
+                    line-height: 1.6;
+                }
+                .personality-section { 
+                    margin: 20px 0; 
+                    padding: 15px;
+                    background-color: var(--vscode-panel-background);
+                    border-radius: 8px;
+                    border: 1px solid var(--vscode-panel-border);
+                }
+                .trait-label { 
+                    font-weight: bold; 
+                    color: var(--vscode-textLink-foreground);
+                    margin-right: 10px;
+                }
+                .trait-value { 
+                    color: var(--vscode-foreground);
+                    font-size: 1.1em;
+                }
+                .progress-bar {
+                    width: 100%;
+                    height: 8px;
+                    background-color: var(--vscode-progressBar-background);
+                    border-radius: 4px;
+                    margin: 5px 0;
+                }
+                .progress-fill {
+                    height: 100%;
+                    background-color: var(--vscode-charts-blue);
+                    border-radius: 4px;
+                    transition: width 0.3s ease;
+                }
+                .recommendations {
+                    background-color: var(--vscode-list-activeSelectionBackground);
+                    padding: 10px;
+                    border-radius: 5px;
+                    margin-top: 10px;
+                }
+                h1 { color: var(--vscode-titleBar-activeForeground); }
+                h2 { color: var(--vscode-textLink-foreground); }
+            </style>
+        </head>
+        <body>
+            <h1>🧬 Your Coding DNA Profile</h1>
+            
+            <div class="personality-section">
+                <h2>🎯 Core Personality</h2>
+                <div><span class="trait-label">Primary Archetype:</span> <span class="trait-value">${personality.primaryArchetype || 'Analyzer'}</span></div>
+                <div><span class="trait-label">Confidence Level:</span> <span class="trait-value">${(personality.confidenceLevel * 100).toFixed(1)}%</span></div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${personality.confidenceLevel * 100}%"></div>
+                </div>
+            </div>
+
+            <div class="personality-section">
+                <h2>🔧 Programming Style</h2>
+                <div><span class="trait-label">Approach:</span> <span class="trait-value">${personality.programmingApproach || 'Balanced'}</span></div>
+                <div><span class="trait-label">Complexity Preference:</span> <span class="trait-value">${personality.complexityPreference || 'Medium'}</span></div>
+                <div><span class="trait-label">Innovation Score:</span> <span class="trait-value">${(personality.innovationScore * 100).toFixed(1)}%</span></div>
+            </div>
+
+            <div class="personality-section">
+                <h2>💡 Recommendations</h2>
+                <div class="recommendations">
+                    ${personality.recommendations ? personality.recommendations.map((rec: string) => `<div>• ${rec}</div>`).join('') : '<div>• Keep exploring new patterns and techniques!</div>'}
+                </div>
+            </div>
+
+            <div class="personality-section">
+                <h2>📈 Growth Areas</h2>
+                <div class="recommendations">
+                    ${personality.growthAreas ? personality.growthAreas.map((area: string) => `<div>• ${area}</div>`).join('') : '<div>• Continue learning and adapting!</div>'}
+                </div>
+            </div>
+        </body>
+        </html>
+    `;
 }
 
 function getPatternWebviewContent(stats: any): string {
@@ -706,6 +882,160 @@ function getDashboardWebviewContent(stats: any): string {
         </body>
         </html>
     `;
+}
+
+/**
+ * Initialize Phase 5: Advanced Intelligence Features
+ */
+async function initializeAdvancedIntelligence(context: vscode.ExtensionContext): Promise<void> {
+    if (CodeWhispererConfig.debugMode) {
+        outputChannel.appendLine('Initializing Phase 5: Advanced Intelligence Features...');
+    }
+
+    try {
+        // 1. Initialize User Feedback System
+        const feedbackSystem = new FeedbackCollectionSystem(context);
+        
+        // 2. Initialize Pattern Adaptation Engine (requires feedback system)
+        const patternEngine = new PatternAdaptationEngine(context, feedbackSystem);
+        
+        // 3. Initialize Temporal Pattern Analyzer
+        const temporalAnalyzer = new TemporalPatternAnalyzer(context);
+        
+        // 4. Initialize Context-Aware Learning System
+        const contextLearning = new ContextAwareLearningSystem(context);
+        
+        // 5. Initialize Multi-Language Pattern Correlator
+        const multiLanguageCorrelator = new MultiLanguagePatternCorrelator(context);
+        
+        // 6. Initialize Refactoring Pattern Detector
+        const refactoringDetector = new RefactoringPatternDetector(context);
+        
+        // 7. Initialize Testing Pattern Recognizer
+        const testingRecognizer = new TestingPatternRecognizer(context);
+        
+        // 8. Initialize Documentation Style Learner
+        const docStyleLearner = new DocumentationStyleLearner(context);
+        
+        // 9. Initialize Error Handling Pattern Analyzer
+        const errorAnalyzer = new ErrorHandlingPatternAnalyzer(context);
+        
+        // 10. Initialize Coding Personality Profiler
+        const personalityProfiler = new CodingPersonalityProfiler(context);
+
+        // Store references in global state for access by other components
+        context.globalState.update('advancedIntelligence', {
+            feedbackSystem,
+            patternEngine,
+            temporalAnalyzer,
+            contextLearning,
+            multiLanguageCorrelator,
+            refactoringDetector,
+            testingRecognizer,
+            docStyleLearner,
+            errorAnalyzer,
+            personalityProfiler
+        });
+
+        // Set up automated analysis workflows
+        setupAutomatedAnalysis(context, {
+            feedbackSystem,
+            patternEngine,
+            temporalAnalyzer,
+            contextLearning,
+            multiLanguageCorrelator,
+            refactoringDetector,
+            testingRecognizer,
+            docStyleLearner,
+            errorAnalyzer,
+            personalityProfiler
+        });
+
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine('✅ All 10 Phase 5 AI components initialized successfully!');
+        }
+
+        vscode.window.showInformationMessage('🎉 Code Whisperer: Advanced Intelligence Features activated!');
+
+    } catch (error) {
+        outputChannel.appendLine(`❌ Error initializing Advanced Intelligence: ${error}`);
+        vscode.window.showErrorMessage('Failed to initialize Code Whisperer Advanced Intelligence Features');
+    }
+}
+
+/**
+ * Set up automated analysis workflows for AI components
+ */
+function setupAutomatedAnalysis(context: vscode.ExtensionContext, aiSystems: any): void {
+    // Set up document change listeners for continuous learning
+    const documentChangeListener = vscode.workspace.onDidChangeTextDocument(async (event) => {
+        if (!CodeWhispererConfig.realTimeAnalysis) return;
+
+        try {
+            const document = event.document;
+            
+            // Analyze with context-aware learning
+            await aiSystems.contextLearning.analyzeCurrentContext();
+            
+            // Detect refactoring opportunities
+            if (aiSystems.refactoringDetector) {
+                await aiSystems.refactoringDetector.analyzeCodeForRefactoring(document);
+            }
+            
+            // Analyze error handling patterns
+            if (aiSystems.errorAnalyzer) {
+                await aiSystems.errorAnalyzer.analyzeErrorHandling(document);
+            }
+            
+            // Learn documentation style
+            if (aiSystems.docStyleLearner) {
+                await aiSystems.docStyleLearner.analyzeDocumentation(document);
+            }
+            
+            // Analyze testing patterns
+            if (aiSystems.testingRecognizer) {
+                await aiSystems.testingRecognizer.analyzeTestFile(document);
+            }
+            
+        } catch (error) {
+            if (CodeWhispererConfig.debugMode) {
+                outputChannel.appendLine(`Error in automated analysis: ${error}`);
+            }
+        }
+    });
+
+    // Set up active editor change listener for personality profiling
+    const activeEditorChangeListener = vscode.window.onDidChangeActiveTextEditor(async (editor) => {
+        if (!editor || !CodeWhispererConfig.realTimeAnalysis) return;
+
+        try {
+            // Update coding personality profile
+            if (aiSystems.personalityProfiler) {
+                await aiSystems.personalityProfiler.analyzeUserCodingDNA(editor.document);
+            }
+            
+            // Analyze temporal patterns
+            if (aiSystems.temporalAnalyzer) {
+                // Record activity for temporal analysis
+                aiSystems.temporalAnalyzer.recordDataPoint(
+                    'file_switch',
+                    1,
+                    {
+                        language: editor.document.languageId,
+                        hour: new Date().getHours(),
+                        weekday: new Date().getDay()
+                    }
+                );
+            }
+            
+        } catch (error) {
+            if (CodeWhispererConfig.debugMode) {
+                outputChannel.appendLine(`Error in editor change analysis: ${error}`);
+            }
+        }
+    });
+
+    context.subscriptions.push(documentChangeListener, activeEditorChangeListener);
 }
 
 export function deactivate() {

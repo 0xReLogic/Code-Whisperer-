@@ -20,8 +20,31 @@ An intelligent IDE extension that learns your coding patterns and provides perso
 - **Privacy-First**: All processing happens locally, no data sent to external servers
 - **Extensible Architecture**: Modular design for easy addition of new languages and features
 - **Rich UI Integration**: Status bar indicators, hover providers, completion suggestions, and code actions
+- **🎉 Fully Integrated**: All Phase 5 Advanced Intelligence Features are now active and integrated into the VS Code extension
 
-## 🏗️ Project Structure
+## � Available Commands
+
+Access these commands through the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`):
+
+### Core Features
+- **Code Whisperer: Analyze Code** - Analyze selected code for patterns
+- **Code Whisperer: Show Learned Patterns** - View all learned patterns
+- **Code Whisperer: Toggle Pattern Suggestions** - Enable/disable suggestions
+- **Code Whisperer: Open Pattern Statistics Dashboard** - View learning statistics
+
+### Phase 5: Advanced Intelligence
+- **Code Whisperer: Show Your Coding Personality Profile** - View detailed coding DNA analysis
+- **Code Whisperer: Show Learning Insights** - View feedback and learning analytics
+- **Code Whisperer: Analyze Coding Habit Evolution** - See how your coding habits change over time
+- **Code Whisperer: Generate Test Suggestions** - Get AI-powered testing recommendations
+- **Code Whisperer: Analyze Error Handling** - Get intelligent error handling suggestions
+
+### Data Management
+- **Code Whisperer: Export Learned Patterns** - Export your patterns to JSON
+- **Code Whisperer: Import Learned Patterns** - Import patterns from JSON
+- **Code Whisperer: Reset Learned Patterns** - Clear all learned data
+
+## �🏗️ Project Structure
 
 ```
 code-whisperer/

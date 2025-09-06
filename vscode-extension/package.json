@@ -55,6 +55,26 @@
       {
         "command": "codeWhisperer.importPatterns",
         "title": "Import Learned Patterns"
+      },
+      {
+        "command": "codeWhisperer.showCodingPersonality",
+        "title": "Show Your Coding Personality Profile"
+      },
+      {
+        "command": "codeWhisperer.showFeedbackInsights",
+        "title": "Show Learning Insights"
+      },
+      {
+        "command": "codeWhisperer.analyzeTemporalPatterns",
+        "title": "Analyze Coding Habit Evolution"
+      },
+      {
+        "command": "codeWhisperer.generateTestSuggestions",
+        "title": "Generate Test Suggestions"
+      },
+      {
+        "command": "codeWhisperer.analyzeErrorHandling",
+        "title": "Analyze Error Handling"
       }
     ],
     "menus": {
@@ -87,6 +107,23 @@
         },
         {
           "command": "codeWhisperer.importPatterns"
+        },
+        {
+          "command": "codeWhisperer.showCodingPersonality"
+        },
+        {
+          "command": "codeWhisperer.showFeedbackInsights"
+        },
+        {
+          "command": "codeWhisperer.analyzeTemporalPatterns"
+        },
+        {
+          "command": "codeWhisperer.generateTestSuggestions",
+          "when": "editorIsOpen"
+        },
+        {
+          "command": "codeWhisperer.analyzeErrorHandling",
+          "when": "editorIsOpen"
         }
       ]
     },
