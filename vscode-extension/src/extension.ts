@@ -5,6 +5,8 @@ import { getStatusBarManager } from './statusBar';
 import { getRealTimeAnalyzer } from './realTimeAnalyzer';
 import { getHoverProvider } from './hoverProvider';
 import { getCompletionProvider } from './completionProvider';
+import { getDiagnosticProvider } from './diagnosticProvider';
+import { getCodeActionProvider } from './codeActionProvider';
 
 // Global extension state
 let outputChannel: vscode.OutputChannel;
@@ -116,6 +118,31 @@ function registerLanguageProviders(context: vscode.ExtensionContext) {
         context.subscriptions.push(completionProviderDisposable);
     });
 
+    // Register diagnostic provider
+    const diagnosticProvider = getDiagnosticProvider(context);
+    context.subscriptions.push({ dispose: () => diagnosticProvider.dispose() });
+
+    // Register code action provider
+    const codeActionProvider = getCodeActionProvider();
+    supportedLanguages.forEach(language => {
+        const codeActionProviderDisposable = vscode.languages.registerCodeActionsProvider(
+            { language, scheme: 'file' },
+            codeActionProvider,
+            {
+                providedCodeActionKinds: [
+                    vscode.CodeActionKind.QuickFix,
+                    vscode.CodeActionKind.Refactor,
+                    vscode.CodeActionKind.RefactorExtract,
+                    vscode.CodeActionKind.RefactorInline,
+                    vscode.CodeActionKind.RefactorRewrite,
+                    vscode.CodeActionKind.Source,
+                    vscode.CodeActionKind.SourceOrganizeImports
+                ]
+            }
+        );
+        context.subscriptions.push(codeActionProviderDisposable);
+    });
+
     // Register for all supported languages with a single registration
     const allLanguagesHoverDisposable = vscode.languages.registerHoverProvider(
         { pattern: '**/*.{ts,js,py,java,cpp,c,cs,go,rs,php,rb,kt,swift}' },
@@ -130,9 +157,27 @@ function registerLanguageProviders(context: vscode.ExtensionContext) {
     );
     context.subscriptions.push(allLanguagesCompletionDisposable);
 
+    const allLanguagesCodeActionDisposable = vscode.languages.registerCodeActionsProvider(
+        { pattern: '**/*.{ts,js,py,java,cpp,c,cs,go,rs,php,rb,kt,swift}' },
+        codeActionProvider,
+        {
+            providedCodeActionKinds: [
+                vscode.CodeActionKind.QuickFix,
+                vscode.CodeActionKind.Refactor,
+                vscode.CodeActionKind.RefactorExtract,
+                vscode.CodeActionKind.RefactorInline,
+                vscode.CodeActionKind.RefactorRewrite,
+                vscode.CodeActionKind.Source,
+                vscode.CodeActionKind.SourceOrganizeImports
+            ]
+        }
+    );
+    context.subscriptions.push(allLanguagesCodeActionDisposable);
+
     // Register disposal
     context.subscriptions.push({ dispose: () => hoverProvider.dispose() });
     context.subscriptions.push({ dispose: () => completionProvider.dispose() });
+    context.subscriptions.push({ dispose: () => codeActionProvider.dispose() });
 }
 
 function registerCommands(context: vscode.ExtensionContext) {
@@ -214,6 +259,84 @@ function registerCommands(context: vscode.ExtensionContext) {
         }
     });
 
+    // Code Action Commands
+    const breakLongLineCommand = vscode.commands.registerCommand('codeWhisperer.breakLongLine', 
+        async (uri: vscode.Uri, range: vscode.Range) => {
+            const document = await vscode.workspace.openTextDocument(uri);
+            const editor = await vscode.window.showTextDocument(document);
+            const line = document.lineAt(range.start.line);
+            const lineText = line.text;
+            
+            // Simple line breaking at reasonable points
+            const breakPoint = Math.min(120, lineText.length);
+            const beforeBreak = lineText.substring(0, breakPoint);
+            const afterBreak = lineText.substring(breakPoint);
+            const indent = lineText.match(/^\s*/)?.[0] || '';
+            
+            const newText = `${beforeBreak}\n${indent}    ${afterBreak.trim()}`;
+            
+            const edit = new vscode.WorkspaceEdit();
+            edit.replace(uri, line.range, newText);
+            await vscode.workspace.applyEdit(edit);
+        }
+    );
+
+    const extractToVariableCommand = vscode.commands.registerCommand('codeWhisperer.extractToVariable',
+        async (uri: vscode.Uri, range: vscode.Range) => {
+            const document = await vscode.workspace.openTextDocument(uri);
+            const selectedText = document.getText(range);
+            
+            const variableName = await vscode.window.showInputBox({
+                prompt: 'Enter variable name',
+                value: 'extracted',
+                validateInput: (value) => {
+                    if (!value || !/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(value)) {
+                        return 'Invalid variable name';
+                    }
+                    return null;
+                }
+            });
+            
+            if (variableName) {
+                const lineNumber = range.start.line;
+                const indent = document.lineAt(lineNumber).text.match(/^\s*/)?.[0] || '';
+                const declaration = `${indent}const ${variableName} = ${selectedText};\n`;
+                
+                const edit = new vscode.WorkspaceEdit();
+                edit.insert(uri, new vscode.Position(lineNumber, 0), declaration);
+                edit.replace(uri, range, variableName);
+                await vscode.workspace.applyEdit(edit);
+            }
+        }
+    );
+
+    const organizeImportsCommand = vscode.commands.registerCommand('codeWhisperer.organizeImports',
+        async (uri: vscode.Uri) => {
+            const document = await vscode.workspace.openTextDocument(uri);
+            const text = document.getText();
+            const lines = text.split('\n');
+            
+            // Simple import organization - group and sort imports
+            const imports: string[] = [];
+            const otherLines: string[] = [];
+            
+            lines.forEach(line => {
+                if (line.trim().startsWith('import ') || line.trim().startsWith('from ')) {
+                    imports.push(line);
+                } else {
+                    otherLines.push(line);
+                }
+            });
+            
+            imports.sort();
+            const organizedText = [...imports, '', ...otherLines].join('\n');
+            
+            const edit = new vscode.WorkspaceEdit();
+            edit.replace(uri, new vscode.Range(0, 0, document.lineCount, 0), organizedText);
+            await vscode.workspace.applyEdit(edit);
+        }
+    );
+
     // Register all commands
     context.subscriptions.push(
         analyzeCodeCommand,
@@ -222,7 +345,10 @@ function registerCommands(context: vscode.ExtensionContext) {
         openDashboardCommand,
         resetLearningCommand,
         exportPatternsCommand,
-        importPatternsCommand
+        importPatternsCommand,
+        breakLongLineCommand,
+        extractToVariableCommand,
+        organizeImportsCommand
     );
 }
 
