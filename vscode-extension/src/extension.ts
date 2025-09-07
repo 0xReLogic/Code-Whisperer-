@@ -71,8 +71,18 @@ export async function activate(context: vscode.ExtensionContext) {
     const realTimeAnalyzer = getRealTimeAnalyzer();
     context.subscriptions.push({ dispose: () => realTimeAnalyzer.dispose() });
 
-    // Initialize Phase 5: Advanced Intelligence Features
-    await initializeAdvancedIntelligence(context);
+    // Initialize Phase 5: Advanced Intelligence Features (with error tolerance)
+    try {
+        await initializeAdvancedIntelligenceIndividually(context);
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine('✅ Advanced Intelligence Features initialized successfully');
+        }
+    } catch (error) {
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine(`⚠️ Advanced Intelligence initialization failed, but extension will continue: ${error}`);
+        }
+        // Continue with basic functionality even if AI fails
+    }
 
     // Register language providers
     registerLanguageProviders(context);
@@ -902,6 +912,124 @@ function getDashboardWebviewContent(stats: any): string {
 }
 
 /**
+ * Initialize AI components individually with better error handling
+ */
+async function initializeAdvancedIntelligenceIndividually(context: vscode.ExtensionContext): Promise<void> {
+    if (CodeWhispererConfig.debugMode) {
+        outputChannel.appendLine('Initializing Phase 5: Advanced Intelligence Features (Individual Mode)...');
+    }
+
+    const aiSystems: any = {};
+    let successCount = 0;
+
+    // Try each component individually
+    try {
+        outputChannel.appendLine('Initializing Feedback System...');
+        aiSystems.feedbackSystem = new FeedbackCollectionSystem(context);
+        outputChannel.appendLine('✅ Feedback System initialized');
+        successCount++;
+    } catch (error) {
+        outputChannel.appendLine(`❌ Feedback System failed: ${error}`);
+    }
+
+    try {
+        outputChannel.appendLine('Initializing Pattern Adaptation Engine...');
+        if (aiSystems.feedbackSystem) {
+            aiSystems.patternEngine = new PatternAdaptationEngine(context, aiSystems.feedbackSystem);
+            outputChannel.appendLine('✅ Pattern Adaptation Engine initialized');
+            successCount++;
+        } else {
+            outputChannel.appendLine('❌ Pattern Adaptation Engine skipped (requires Feedback System)');
+        }
+    } catch (error) {
+        outputChannel.appendLine(`❌ Pattern Adaptation Engine failed: ${error}`);
+    }
+
+    try {
+        outputChannel.appendLine('Initializing Temporal Pattern Analyzer...');
+        aiSystems.temporalAnalyzer = new TemporalPatternAnalyzer(context);
+        outputChannel.appendLine('✅ Temporal Pattern Analyzer initialized');
+        successCount++;
+    } catch (error) {
+        outputChannel.appendLine(`❌ Temporal Pattern Analyzer failed: ${error}`);
+    }
+
+    try {
+        outputChannel.appendLine('Initializing Context-Aware Learning System...');
+        aiSystems.contextLearning = new ContextAwareLearningSystem(context);
+        outputChannel.appendLine('✅ Context-Aware Learning System initialized');
+        successCount++;
+    } catch (error) {
+        outputChannel.appendLine(`❌ Context-Aware Learning System failed: ${error}`);
+    }
+
+    try {
+        outputChannel.appendLine('Initializing Multi-Language Pattern Correlator...');
+        aiSystems.multiLanguageCorrelator = new MultiLanguagePatternCorrelator(context);
+        outputChannel.appendLine('✅ Multi-Language Pattern Correlator initialized');
+        successCount++;
+    } catch (error) {
+        outputChannel.appendLine(`❌ Multi-Language Pattern Correlator failed: ${error}`);
+    }
+
+    try {
+        outputChannel.appendLine('Initializing Refactoring Pattern Detector...');
+        aiSystems.refactoringDetector = new RefactoringPatternDetector(context);
+        outputChannel.appendLine('✅ Refactoring Pattern Detector initialized');
+        successCount++;
+    } catch (error) {
+        outputChannel.appendLine(`❌ Refactoring Pattern Detector failed: ${error}`);
+    }
+
+    try {
+        outputChannel.appendLine('Initializing Testing Pattern Recognizer...');
+        aiSystems.testingRecognizer = new TestingPatternRecognizer(context);
+        outputChannel.appendLine('✅ Testing Pattern Recognizer initialized');
+        successCount++;
+    } catch (error) {
+        outputChannel.appendLine(`❌ Testing Pattern Recognizer failed: ${error}`);
+    }
+
+    try {
+        outputChannel.appendLine('Initializing Documentation Style Learner...');
+        aiSystems.docStyleLearner = new DocumentationStyleLearner(context);
+        outputChannel.appendLine('✅ Documentation Style Learner initialized');
+        successCount++;
+    } catch (error) {
+        outputChannel.appendLine(`❌ Documentation Style Learner failed: ${error}`);
+    }
+
+    try {
+        outputChannel.appendLine('Initializing Error Handling Pattern Analyzer...');
+        aiSystems.errorAnalyzer = new ErrorHandlingPatternAnalyzer(context);
+        outputChannel.appendLine('✅ Error Handling Pattern Analyzer initialized');
+        successCount++;
+    } catch (error) {
+        outputChannel.appendLine(`❌ Error Handling Pattern Analyzer failed: ${error}`);
+    }
+
+    try {
+        outputChannel.appendLine('Initializing Coding Personality Profiler...');
+        aiSystems.personalityProfiler = new CodingPersonalityProfiler(context);
+        outputChannel.appendLine('✅ Coding Personality Profiler initialized');
+        successCount++;
+    } catch (error) {
+        outputChannel.appendLine(`❌ Coding Personality Profiler failed: ${error}`);
+    }
+
+    // Store whatever we successfully initialized
+    await context.globalState.update('advancedIntelligence', aiSystems);
+    
+    outputChannel.appendLine(`✅ AI Initialization complete: ${successCount}/10 components initialized`);
+    
+    if (successCount > 0) {
+        vscode.window.showInformationMessage(`🎉 Code Whisperer: ${successCount}/10 AI components activated!`);
+    } else {
+        vscode.window.showWarningMessage('⚠️ Code Whisperer: No AI components could be initialized');
+    }
+}
+
+/**
  * Initialize Phase 5: Advanced Intelligence Features
  */
 async function initializeAdvancedIntelligence(context: vscode.ExtensionContext): Promise<void> {
@@ -915,60 +1043,90 @@ async function initializeAdvancedIntelligence(context: vscode.ExtensionContext):
             outputChannel.appendLine('Initializing Feedback System...');
         }
         const feedbackSystem = new FeedbackCollectionSystem(context);
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine('✅ Feedback System initialized');
+        }
         
         // 2. Initialize Pattern Adaptation Engine (requires feedback system)
         if (CodeWhispererConfig.debugMode) {
             outputChannel.appendLine('Initializing Pattern Adaptation Engine...');
         }
         const patternEngine = new PatternAdaptationEngine(context, feedbackSystem);
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine('✅ Pattern Adaptation Engine initialized');
+        }
         
         // 3. Initialize Temporal Pattern Analyzer
         if (CodeWhispererConfig.debugMode) {
             outputChannel.appendLine('Initializing Temporal Pattern Analyzer...');
         }
         const temporalAnalyzer = new TemporalPatternAnalyzer(context);
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine('✅ Temporal Pattern Analyzer initialized');
+        }
         
         // 4. Initialize Context-Aware Learning System
         if (CodeWhispererConfig.debugMode) {
             outputChannel.appendLine('Initializing Context-Aware Learning System...');
         }
         const contextLearning = new ContextAwareLearningSystem(context);
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine('✅ Context-Aware Learning System initialized');
+        }
         
         // 5. Initialize Multi-Language Pattern Correlator
         if (CodeWhispererConfig.debugMode) {
             outputChannel.appendLine('Initializing Multi-Language Pattern Correlator...');
         }
         const multiLanguageCorrelator = new MultiLanguagePatternCorrelator(context);
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine('✅ Multi-Language Pattern Correlator initialized');
+        }
         
         // 6. Initialize Refactoring Pattern Detector
         if (CodeWhispererConfig.debugMode) {
             outputChannel.appendLine('Initializing Refactoring Pattern Detector...');
         }
         const refactoringDetector = new RefactoringPatternDetector(context);
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine('✅ Refactoring Pattern Detector initialized');
+        }
         
         // 7. Initialize Testing Pattern Recognizer
         if (CodeWhispererConfig.debugMode) {
             outputChannel.appendLine('Initializing Testing Pattern Recognizer...');
         }
         const testingRecognizer = new TestingPatternRecognizer(context);
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine('✅ Testing Pattern Recognizer initialized');
+        }
         
         // 8. Initialize Documentation Style Learner
         if (CodeWhispererConfig.debugMode) {
             outputChannel.appendLine('Initializing Documentation Style Learner...');
         }
         const docStyleLearner = new DocumentationStyleLearner(context);
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine('✅ Documentation Style Learner initialized');
+        }
         
         // 9. Initialize Error Handling Pattern Analyzer
         if (CodeWhispererConfig.debugMode) {
             outputChannel.appendLine('Initializing Error Handling Pattern Analyzer...');
         }
         const errorAnalyzer = new ErrorHandlingPatternAnalyzer(context);
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine('✅ Error Handling Pattern Analyzer initialized');
+        }
         
         // 10. Initialize Coding Personality Profiler
         if (CodeWhispererConfig.debugMode) {
             outputChannel.appendLine('Initializing Coding Personality Profiler...');
         }
         const personalityProfiler = new CodingPersonalityProfiler(context);
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine('✅ Coding Personality Profiler initialized');
+        }
 
         // Store references in global state for access by other components
         const aiSystems = {
@@ -1002,10 +1160,16 @@ async function initializeAdvancedIntelligence(context: vscode.ExtensionContext):
         vscode.window.showInformationMessage('🎉 Code Whisperer: Advanced Intelligence Features activated!');
 
     } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorStack = error instanceof Error ? error.stack : '';
+        
         if (CodeWhispererConfig.debugMode && outputChannel) {
-            outputChannel.appendLine(`❌ Error initializing Advanced Intelligence: ${error}`);
+            outputChannel.appendLine(`❌ Error initializing Advanced Intelligence: ${errorMessage}`);
+            if (errorStack) {
+                outputChannel.appendLine(`Stack trace: ${errorStack}`);
+            }
         }
-        vscode.window.showErrorMessage('Failed to initialize Code Whisperer Advanced Intelligence Features');
+        vscode.window.showErrorMessage(`Failed to initialize Code Whisperer Advanced Intelligence Features: ${errorMessage}`);
     }
 }
 
