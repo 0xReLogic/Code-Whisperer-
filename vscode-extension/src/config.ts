@@ -125,7 +125,7 @@ export class CodeWhispererConfig {
      * Check if debug mode is enabled
      */
     static get debugMode(): boolean {
-        return this.getConfig().get<boolean>('debugMode', false);
+        return this.getConfig().get<boolean>('debugMode', true); // Enable debug by default for testing
     }
 
     /**
