@@ -354,16 +354,33 @@ function registerCommands(context: vscode.ExtensionContext) {
 
     // Phase 5: Advanced Intelligence Commands
     const showCodingPersonalityCommand = vscode.commands.registerCommand('codeWhisperer.showCodingPersonality', async () => {
-        const aiSystems = context.globalState.get('advancedIntelligence') as any;
-        if (aiSystems?.personalityProfiler) {
-            const personality = aiSystems.personalityProfiler.getCodingPersonalityInsights();
-            const panel = vscode.window.createWebviewPanel(
-                'codingPersonality',
-                'Your Coding Personality',
-                vscode.ViewColumn.One,
-                {}
-            );
-            panel.webview.html = createPersonalityHTML(personality);
+        try {
+            const aiSystems = context.globalState.get('advancedIntelligence') as any;
+            if (CodeWhispererConfig.debugMode) {
+                outputChannel.appendLine(`AI Systems available: ${!!aiSystems}`);
+                outputChannel.appendLine(`Personality Profiler available: ${!!aiSystems?.personalityProfiler}`);
+            }
+            
+            if (aiSystems?.personalityProfiler) {
+                const personality = aiSystems.personalityProfiler.getCodingPersonalityInsights();
+                const panel = vscode.window.createWebviewPanel(
+                    'codingPersonality',
+                    'Your Coding Personality',
+                    vscode.ViewColumn.One,
+                    {}
+                );
+                panel.webview.html = createPersonalityHTML(personality);
+            } else {
+                vscode.window.showWarningMessage('Coding Personality Profiler not initialized. Please wait for extension to fully load.');
+                if (CodeWhispererConfig.debugMode) {
+                    outputChannel.appendLine('Available AI systems keys: ' + (aiSystems ? Object.keys(aiSystems).join(', ') : 'none'));
+                }
+            }
+        } catch (error) {
+            vscode.window.showErrorMessage(`Error showing coding personality: ${error}`);
+            if (CodeWhispererConfig.debugMode) {
+                outputChannel.appendLine(`Error in showCodingPersonality: ${error}`);
+            }
         }
     });
 
@@ -894,37 +911,67 @@ async function initializeAdvancedIntelligence(context: vscode.ExtensionContext):
 
     try {
         // 1. Initialize User Feedback System
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine('Initializing Feedback System...');
+        }
         const feedbackSystem = new FeedbackCollectionSystem(context);
         
         // 2. Initialize Pattern Adaptation Engine (requires feedback system)
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine('Initializing Pattern Adaptation Engine...');
+        }
         const patternEngine = new PatternAdaptationEngine(context, feedbackSystem);
         
         // 3. Initialize Temporal Pattern Analyzer
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine('Initializing Temporal Pattern Analyzer...');
+        }
         const temporalAnalyzer = new TemporalPatternAnalyzer(context);
         
         // 4. Initialize Context-Aware Learning System
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine('Initializing Context-Aware Learning System...');
+        }
         const contextLearning = new ContextAwareLearningSystem(context);
         
         // 5. Initialize Multi-Language Pattern Correlator
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine('Initializing Multi-Language Pattern Correlator...');
+        }
         const multiLanguageCorrelator = new MultiLanguagePatternCorrelator(context);
         
         // 6. Initialize Refactoring Pattern Detector
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine('Initializing Refactoring Pattern Detector...');
+        }
         const refactoringDetector = new RefactoringPatternDetector(context);
         
         // 7. Initialize Testing Pattern Recognizer
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine('Initializing Testing Pattern Recognizer...');
+        }
         const testingRecognizer = new TestingPatternRecognizer(context);
         
         // 8. Initialize Documentation Style Learner
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine('Initializing Documentation Style Learner...');
+        }
         const docStyleLearner = new DocumentationStyleLearner(context);
         
         // 9. Initialize Error Handling Pattern Analyzer
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine('Initializing Error Handling Pattern Analyzer...');
+        }
         const errorAnalyzer = new ErrorHandlingPatternAnalyzer(context);
         
         // 10. Initialize Coding Personality Profiler
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine('Initializing Coding Personality Profiler...');
+        }
         const personalityProfiler = new CodingPersonalityProfiler(context);
 
         // Store references in global state for access by other components
-        context.globalState.update('advancedIntelligence', {
+        const aiSystems = {
             feedbackSystem,
             patternEngine,
             temporalAnalyzer,
@@ -935,21 +982,18 @@ async function initializeAdvancedIntelligence(context: vscode.ExtensionContext):
             docStyleLearner,
             errorAnalyzer,
             personalityProfiler
-        });
+        };
+        
+        await context.globalState.update('advancedIntelligence', aiSystems);
+        
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine('✅ All AI systems initialized successfully!');
+            outputChannel.appendLine(`AI Systems keys: ${Object.keys(aiSystems).join(', ')}`);
+        }
 
         // Set up automated analysis workflows
-        setupAutomatedAnalysis(context, {
-            feedbackSystem,
-            patternEngine,
-            temporalAnalyzer,
-            contextLearning,
-            multiLanguageCorrelator,
-            refactoringDetector,
-            testingRecognizer,
-            docStyleLearner,
-            errorAnalyzer,
-            personalityProfiler
-        });
+        // Set up automated analysis workflows
+        setupAutomatedAnalysis(context, aiSystems);
 
         if (CodeWhispererConfig.debugMode) {
             outputChannel.appendLine('✅ All 10 Phase 5 AI components initialized successfully!');
@@ -958,7 +1002,9 @@ async function initializeAdvancedIntelligence(context: vscode.ExtensionContext):
         vscode.window.showInformationMessage('🎉 Code Whisperer: Advanced Intelligence Features activated!');
 
     } catch (error) {
-        outputChannel.appendLine(`❌ Error initializing Advanced Intelligence: ${error}`);
+        if (CodeWhispererConfig.debugMode && outputChannel) {
+            outputChannel.appendLine(`❌ Error initializing Advanced Intelligence: ${error}`);
+        }
         vscode.window.showErrorMessage('Failed to initialize Code Whisperer Advanced Intelligence Features');
     }
 }

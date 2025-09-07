@@ -244,28 +244,32 @@ export class PatternAdaptationEngine {
             let adjustment = 0;
             
             switch (strategy.name) {
-                case 'frequency_based':
+                case 'frequency_based': {
                     // Higher frequency = higher confidence
                     const frequency = pattern.usage.accepted / Math.max(pattern.usage.suggested, 1);
                     adjustment = (frequency - 0.5) * strategy.weight;
                     break;
+                }
                     
-                case 'recency_boost':
+                case 'recency_boost': {
                     // Recent usage = confidence boost
                     const daysSinceLastUse = (Date.now() - pattern.usage.lastUsed) / (1000 * 60 * 60 * 24);
                     adjustment = Math.max(0, 1 - daysSinceLastUse / 30) * strategy.weight;
                     break;
+                }
                     
-                case 'context_relevance':
+                case 'context_relevance': {
                     // Similar context = confidence boost
                     adjustment = this.calculateContextSimilarity(pattern.context, context) * strategy.weight;
                     break;
+                }
                     
-                case 'temporal_decay':
+                case 'temporal_decay': {
                     // Old patterns lose confidence
                     const daysSinceCreation = (Date.now() - pattern.usage.lastUsed) / (1000 * 60 * 60 * 24);
                     adjustment = -Math.min(daysSinceCreation * this.CONFIDENCE_DECAY_RATE, 0.5);
                     break;
+                }
             }
             
             adjustments += adjustment;
