@@ -23,6 +23,7 @@ export class WasmLoader {
     private engine: any = null;
     private isLoading = false;
     private loadPromise: Promise<WasmModule> | null = null;
+    private context: vscode.ExtensionContext | null = null;
 
     private constructor() {}
 
@@ -31,6 +32,46 @@ export class WasmLoader {
             this.instance = new WasmLoader();
         }
         return this.instance;
+    }
+
+    /**
+     * Set the extension context for persistent storage
+     */
+    setContext(context: vscode.ExtensionContext) {
+        this.context = context;
+    }
+
+    /**
+     * Get persistent statistics from storage
+     */
+    private getPersistentStats() {
+        if (!this.context) {
+            return {
+                totalPatterns: 15,
+                totalSuggestions: 42,
+                acceptanceRate: 0.75,
+                averageConfidence: 0.82
+            };
+        }
+
+        return {
+            totalPatterns: this.context.globalState.get('codeWhisperer.totalPatterns', 15),
+            totalSuggestions: this.context.globalState.get('codeWhisperer.totalSuggestions', 42),
+            acceptanceRate: this.context.globalState.get('codeWhisperer.acceptanceRate', 0.75),
+            averageConfidence: this.context.globalState.get('codeWhisperer.averageConfidence', 0.82)
+        };
+    }
+
+    /**
+     * Update persistent statistics
+     */
+    private async updatePersistentStats(stats: any) {
+        if (!this.context) return;
+
+        await this.context.globalState.update('codeWhisperer.totalPatterns', stats.totalPatterns);
+        await this.context.globalState.update('codeWhisperer.totalSuggestions', stats.totalSuggestions);
+        await this.context.globalState.update('codeWhisperer.acceptanceRate', stats.acceptanceRate);
+        await this.context.globalState.update('codeWhisperer.averageConfidence', stats.averageConfidence);
     }
 
     /**
@@ -64,6 +105,7 @@ export class WasmLoader {
 
             // For now, we'll create a mock interface until WASM is fully integrated
             // TODO: Replace with actual WASM loading
+            const wasmLoader = this; // Reference to access context
             const mockWasmModule: WasmModule = {
                 CodeWhispererEngine: class {
                     constructor(config: any) {
@@ -150,18 +192,36 @@ export class WasmLoader {
                         if (CodeWhispererConfig.debugMode) {
                             console.log(`Learning from feedback: ${suggestionId} -> ${accepted}`);
                         }
-                        // Mock learning implementation
+                        
+                        // Update statistics based on feedback
+                        const currentStats = wasmLoader.getPersistentStats();
+                        currentStats.totalSuggestions += 1;
+                        
+                        if (accepted) {
+                            // Improve acceptance rate
+                            currentStats.acceptanceRate = (currentStats.acceptanceRate * 0.9) + (1.0 * 0.1);
+                        } else {
+                            // Slightly decrease acceptance rate
+                            currentStats.acceptanceRate = (currentStats.acceptanceRate * 0.95) + (0.0 * 0.05);
+                        }
+                        
+                        wasmLoader.updatePersistentStats(currentStats);
                         return true;
                     }
 
                     getStatistics() {
+                        const persistentStats = wasmLoader.getPersistentStats();
                         return {
-                            totalPatterns: Math.floor(Math.random() * 1000) + 100,
-                            totalSuggestions: Math.floor(Math.random() * 5000) + 500,
-                            acceptanceRate: Math.random() * 0.3 + 0.6,
-                            averageConfidence: Math.random() * 0.2 + 0.75,
+                            ...persistentStats,
                             lastUpdated: new Date().toISOString()
                         };
+                    }
+
+                    addPattern(pattern: any) {
+                        const currentStats = wasmLoader.getPersistentStats();
+                        currentStats.totalPatterns += 1;
+                        currentStats.averageConfidence = (currentStats.averageConfidence * 0.8) + (pattern.confidence * 0.2);
+                        wasmLoader.updatePersistentStats(currentStats);
                     }
                 },
 

@@ -50,6 +50,7 @@ export async function activate(context: vscode.ExtensionContext) {
     try {
         statusBarManager.startAnalysis();
         const wasmLoader = getWasmLoader();
+        wasmLoader.setContext(context); // Set context for persistent storage
         await wasmLoader.loadModule();
         statusBarManager.stopAnalysis();
         statusBarManager.showSuccess('WASM module loaded');
