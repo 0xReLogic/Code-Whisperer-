@@ -91,6 +91,27 @@ export async function activate(context: vscode.ExtensionContext) {
     // Register commands
     registerCommands(context);
 
+    // *** REAL DATA TRACKING - Track when user accepts completion suggestions ***
+    const acceptSuggestionCommand = vscode.commands.registerCommand('codeWhisperer.acceptSuggestion', async (suggestionId: string) => {
+        const wasmLoader = getWasmLoader();
+        const engine = await wasmLoader.getEngine();
+        await engine.learnFromFeedback(suggestionId, true);
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine(`✅ User accepted suggestion: ${suggestionId}`);
+        }
+    });
+    
+    const rejectSuggestionCommand = vscode.commands.registerCommand('codeWhisperer.rejectSuggestion', async (suggestionId: string) => {
+        const wasmLoader = getWasmLoader();
+        const engine = await wasmLoader.getEngine();
+        await engine.learnFromFeedback(suggestionId, false);
+        if (CodeWhispererConfig.debugMode) {
+            outputChannel.appendLine(`❌ User rejected suggestion: ${suggestionId}`);
+        }
+    });
+    
+    context.subscriptions.push(acceptSuggestionCommand, rejectSuggestionCommand);
+
     // Set up configuration change listener
     const configListener = CodeWhispererConfig.onConfigurationChanged((event) => {
         statusBarManager.onConfigurationChanged();
@@ -503,6 +524,15 @@ async function analyzeCurrentCode(): Promise<void> {
         const analysisResult = engine.analyzeCode(selectedText, editorContext);
 
         statusBarManager.stopAnalysis();
+        
+        // *** REAL DATA TRACKING - Increment analysis count with actual confidence ***
+        await wasmLoader.incrementAnalysis(analysisResult.confidence);
+        
+        // Add real patterns discovered
+        for (const pattern of analysisResult.patterns) {
+            await engine.addPattern(pattern);
+        }
+        
         statusBarManager.incrementPatternCount();
 
         // Show analysis results

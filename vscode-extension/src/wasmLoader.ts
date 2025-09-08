@@ -42,36 +42,78 @@ export class WasmLoader {
     }
 
     /**
-     * Get persistent statistics from storage
+     * Get persistent statistics from storage - REAL DATA ONLY
      */
     private getPersistentStats() {
         if (!this.context) {
             return {
-                totalPatterns: 15,
-                totalSuggestions: 42,
-                acceptanceRate: 0.75,
-                averageConfidence: 0.82
+                totalPatterns: 0,
+                totalSuggestions: 0,
+                acceptedSuggestions: 0,
+                rejectedSuggestions: 0,
+                totalAnalyses: 0,
+                confidenceSum: 0
             };
         }
 
         return {
-            totalPatterns: this.context.globalState.get('codeWhisperer.totalPatterns', 15),
-            totalSuggestions: this.context.globalState.get('codeWhisperer.totalSuggestions', 42),
-            acceptanceRate: this.context.globalState.get('codeWhisperer.acceptanceRate', 0.75),
-            averageConfidence: this.context.globalState.get('codeWhisperer.averageConfidence', 0.82)
+            totalPatterns: this.context.globalState.get('codeWhisperer.totalPatterns', 0),
+            totalSuggestions: this.context.globalState.get('codeWhisperer.totalSuggestions', 0),
+            acceptedSuggestions: this.context.globalState.get('codeWhisperer.acceptedSuggestions', 0),
+            rejectedSuggestions: this.context.globalState.get('codeWhisperer.rejectedSuggestions', 0),
+            totalAnalyses: this.context.globalState.get('codeWhisperer.totalAnalyses', 0),
+            confidenceSum: this.context.globalState.get('codeWhisperer.confidenceSum', 0)
         };
     }
 
     /**
-     * Update persistent statistics
+     * Update persistent statistics with REAL data
      */
     private async updatePersistentStats(stats: any) {
         if (!this.context) return;
 
         await this.context.globalState.update('codeWhisperer.totalPatterns', stats.totalPatterns);
         await this.context.globalState.update('codeWhisperer.totalSuggestions', stats.totalSuggestions);
-        await this.context.globalState.update('codeWhisperer.acceptanceRate', stats.acceptanceRate);
-        await this.context.globalState.update('codeWhisperer.averageConfidence', stats.averageConfidence);
+        await this.context.globalState.update('codeWhisperer.acceptedSuggestions', stats.acceptedSuggestions);
+        await this.context.globalState.update('codeWhisperer.rejectedSuggestions', stats.rejectedSuggestions);
+        await this.context.globalState.update('codeWhisperer.totalAnalyses', stats.totalAnalyses);
+        await this.context.globalState.update('codeWhisperer.confidenceSum', stats.confidenceSum);
+    }
+
+    /**
+     * Calculate REAL acceptance rate from actual user feedback
+     */
+    private calculateAcceptanceRate(stats: any): number {
+        const totalFeedback = stats.acceptedSuggestions + stats.rejectedSuggestions;
+        if (totalFeedback === 0) return 0;
+        return stats.acceptedSuggestions / totalFeedback;
+    }
+
+    /**
+     * Calculate REAL average confidence from actual analyses
+     */
+    private calculateAverageConfidence(stats: any): number {
+        if (stats.totalAnalyses === 0) return 0;
+        return stats.confidenceSum / stats.totalAnalyses;
+    }
+
+    /**
+     * Increment analysis count and update confidence - REAL tracking
+     */
+    async incrementAnalysis(confidence: number) {
+        const stats = this.getPersistentStats();
+        stats.totalAnalyses += 1;
+        stats.confidenceSum += confidence;
+        await this.updatePersistentStats(stats);
+    }
+
+    /**
+     * Add real pattern when detected - REAL tracking  
+     */
+    async addRealPattern() {
+        const stats = this.getPersistentStats();
+        stats.totalPatterns += 1;
+        await this.updatePersistentStats(stats);
     }
 
     /**
@@ -193,16 +235,14 @@ export class WasmLoader {
                             console.log(`Learning from feedback: ${suggestionId} -> ${accepted}`);
                         }
                         
-                        // Update statistics based on feedback
+                        // Update REAL statistics based on actual user feedback
                         const currentStats = wasmLoader.getPersistentStats();
                         currentStats.totalSuggestions += 1;
                         
                         if (accepted) {
-                            // Improve acceptance rate
-                            currentStats.acceptanceRate = (currentStats.acceptanceRate * 0.9) + (1.0 * 0.1);
+                            currentStats.acceptedSuggestions += 1;
                         } else {
-                            // Slightly decrease acceptance rate
-                            currentStats.acceptanceRate = (currentStats.acceptanceRate * 0.95) + (0.0 * 0.05);
+                            currentStats.rejectedSuggestions += 1;
                         }
                         
                         wasmLoader.updatePersistentStats(currentStats);
@@ -212,16 +252,18 @@ export class WasmLoader {
                     getStatistics() {
                         const persistentStats = wasmLoader.getPersistentStats();
                         return {
-                            ...persistentStats,
+                            totalPatterns: persistentStats.totalPatterns,
+                            totalSuggestions: persistentStats.totalSuggestions,
+                            acceptanceRate: wasmLoader.calculateAcceptanceRate(persistentStats),
+                            averageConfidence: wasmLoader.calculateAverageConfidence(persistentStats),
                             lastUpdated: new Date().toISOString()
                         };
                     }
 
                     addPattern(pattern: any) {
-                        const currentStats = wasmLoader.getPersistentStats();
-                        currentStats.totalPatterns += 1;
-                        currentStats.averageConfidence = (currentStats.averageConfidence * 0.8) + (pattern.confidence * 0.2);
-                        wasmLoader.updatePersistentStats(currentStats);
+                        // Add REAL pattern from actual analysis
+                        wasmLoader.addRealPattern();
+                        wasmLoader.incrementAnalysis(pattern.confidence);
                     }
                 },
 
